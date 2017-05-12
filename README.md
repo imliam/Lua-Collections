@@ -102,7 +102,7 @@ collect({1, 2, 3, 4}):append(5):all()
 <a name="method-average"></a>
 ### `average([key])`
 
-**Description:** Returns the average value of a list or given key
+**Description:** Returns the [average value](https://en.wikipedia.org/wiki/Average) of a list or given key
 
 **Returns:** `number`
 
@@ -918,7 +918,7 @@ collect({ {foo = 10}, {foo = 20} }):max('foo')
 <a name="method-median"></a>
 ### `median([medianKey])`
 
-**Description:** Returns the median value of a set of given values.
+**Description:** Returns the [median value](https://en.wikipedia.org/wiki/Median) of a set of given values.
 
 **Returns:** `number`
 
