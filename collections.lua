@@ -908,7 +908,6 @@ function Collection:split(count)
             splitted:append(currentSection)
             currentSection = {}
         end
-        print(#currentSection, count)
     end
     if #currentSection > 0 then
         splitted:append(currentSection)
