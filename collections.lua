@@ -585,10 +585,10 @@ function Collection:nth(step, offset)
     return nth
 end
 
---- Returns the items in the collectiion with the specified keys
-function Collection:only(only)
+--- Returns the items in the collection with the specified keys
+function Collection:only(keys)
     local onlyList = {}
-    for key, value in pairs(only) do
+    for key, value in pairs(keys) do
         onlyList[value] = true
     end
 
@@ -650,12 +650,12 @@ function Collection:prepend(value)
 end
 
 --- Removes and returns an item from the collection by key
-function Collection:pull(pulledKey)
-    if type(pulledKey) == 'number' then
-        return table.remove(self.table, pulledKey)
+function Collection:pull(key)
+    if type(key) == 'number' then
+        return table.remove(self.table, key)
     else
-        local pulled = self.table[pulledKey]
-        self.table[pulledKey] = nil
+        local pulled = self.table[key]
+        self.table[key] = nil
         return pulled
     end
 end
@@ -831,7 +831,7 @@ function Collection:sort(callback)
     return sorted
 end
 
---- Alias for the Collectiion:sort() method
+--- Alias for the Collection:sort() method
 function Collection:sortAsc(callback)
     return self:sort(callback)
 end
