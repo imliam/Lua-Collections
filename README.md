@@ -88,7 +88,7 @@ collect({'Hello', 'world'}):all()
 
 | # | Type | Name | Description |
 | --- | --- | --- | --- |
-| 1 | `any` | value | The value to be added to the end of the collection |
+| 1 | Any | value | The value to be added to the end of the collection |
 
 **Example:**
 
@@ -537,14 +537,14 @@ collect({1, 2, 3, 4, 5, 6, 7, 8, 9}):forPage(2, 3):all()
 
 **Description:** Returns the item of a given key
 
-**Returns:** `any`
+**Returns:** Any
 
 **Arguments:**
 
 | # | Type | Name | Description |
 | --- | --- | --- | --- |
 | 1 | `string`, `number` | key | The value to be represented as a string |
-| 2 | `any` | default | *(Optional)* A value to be returned if the value was not found in the collection. If this is a function, it will be executred as a callback |
+| 2 | Any | default | *(Optional)* A value to be returned if the value was not found in the collection. If this is a function, it will be executred as a callback |
 
 **Example:**
 
@@ -1224,7 +1224,7 @@ collection:all()
 
 | # | Type | Name | Description |
 | --- | --- | --- | --- |
-| 1 | `all` | value | The value to be added to the beginning of the collection |
+| 1 | Any | value | The value to be added to the beginning of the collection |
 
 **Example:**
 
@@ -1283,7 +1283,7 @@ collection:all()
 | # | Type | Name | Description |
 | --- | --- | --- | --- |
 | 1 | `string`, `number` | key | The key of the item to be set in the collection |
-| 2 | `any` | value | The value of the item to be set in the collection |
+| 2 | Any | value | The value of the item to be set in the collection |
 
 **Example:**
 
@@ -1334,7 +1334,7 @@ collect({1, 2, 3, 4, 5}):random(3)
 | # | Type | Name | Description |
 | --- | --- | --- | --- |
 | 1 | `function` | callback | Function to iterate over the collection with |
-| 2 | `any` | default | The default value for carry, as one is not set before the first iteration |
+| 2 | Any | default | The default value for carry, as one is not set before the first iteration |
 
 **Example:**
 
