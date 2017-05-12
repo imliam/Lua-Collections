@@ -1367,8 +1367,6 @@ collect({1, 2, 3, 4}):reject(function(key, value)
     return value > 2
 end):all()
 -- {1, 2}
-
-
 ```
 
 <hr>
