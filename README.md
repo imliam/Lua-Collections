@@ -23,7 +23,7 @@ This collection class was heavily inspired by the collection functionality found
 
 ## Creating Collections
 
-A collection can be created with the `collect()` helper function, which is merely an alias for `Collection:new()`. It accepts an existing table as an argument to create the collection, or will be empty if none is supplied.
+A collection can be created with the `collect()` helper function, which is merely an alias for [Collection:new()](#method-new). It accepts an existing table as an argument to create the collection, or will be empty if none is supplied.
 
 ```lua
 collect({'Hello', 'world'})
@@ -421,7 +421,9 @@ collect({1, 2, 3, nil, false, '', 0, {}}):filter():all()
 <a name="method-first"></a>
 ### `first([callback])`
 
-**Description:** Returns the first element in the collection, or that passes a truth test
+**Description:** Returns the first element in the collection, or if a callback is given, the last element that passes a truth test.
+
+To get the last item in a collection, see the [last](#method-last) method.
 
 **Returns:** Item inside the collection
 
@@ -429,7 +431,7 @@ collect({1, 2, 3, nil, false, '', 0, {}}):filter():all()
 
 | # | Type | Name | Description |
 | --- | --- | --- | --- |
-| 1 | `function` | arg1 | The value to be represented as a string |
+| 1 | `function` | callback | The function to determine if the value is true |
 
 **Example:**
 
@@ -457,8 +459,8 @@ end)
 | # | Type | Name | Description |
 | --- | --- | --- | --- |
 | 1 | `number` | depth | The amount of levels deep into subtables the flattening should occur |
-| 2 | `type` | tbl | *(Internal argument)* Used to pass a sub-table to flatten |
-| 3 | `type` | currentDepth | *(Internal argument)* The depth of the current iteration |
+| 2 | `table` | tbl | *(Internal argument)* Used to pass a sub-table to flatten |
+| 3 | `number` | currentDepth | *(Internal argument)* The depth of the current iteration |
 
 **Example:**
 
@@ -635,7 +637,7 @@ collect({name = 'Liam', language = 'Lua'}):has('language')
 
 | # | Type | Name | Description |
 | --- | --- | --- | --- |
-| 1 | `type` | implodedKey | The key to implode the value of. Not required if the table has one dimension (If so, delimeter takes place of this argument in the function call) |
+| 1 | `string`, `number` | implodedKey | The key to implode the value of. Not required if the table has one dimension (If so, delimeter takes place of this argument in the function call) |
 | 2 | `string` | delimeter | *(Optional)* String to use as a delimeter between items |
 
 **Example:**
@@ -703,11 +705,12 @@ collect({name = 'Liam', language = 'Lua'}):isAssociative()
 
 <hr>
 
-<hr>
 <a name="method-isEmpty"></a>
 ### `isEmpty()`
 
-**Description:** Determines if the collection is empty
+**Description:** Determines if the collection is empty.
+
+To determine if a collection contains values, see the [isNotEmpty](#method-isNotEmpty) method.
 
 **Returns:** `boolean`
 
@@ -726,7 +729,9 @@ collect():isEmpty()
 <a name="method-isNotEmpty"></a>
 ### `isNotEmpty()`
 
-**Description:** Determines if the collection is not empty
+**Description:** Determines if the collection is not empty.
+
+To determine if a collection contains no values, see the [isEmpty](#method-isEmpty) method.
 
 **Returns:** `boolean`
 
@@ -806,7 +811,9 @@ collect({name = 'Liam', language = 'Lua'}):keys():all()
 <a name="method-last"></a>
 ### `last([callback])`
 
-**Description:** Returns the last element in the collection, or that passes a truth test
+**Description:** Returns the last element in the collection, or if a callback is given, the last element that passes a truth test.
+
+To get the first item in a collection, see the [first](#method-first) method.
 
 **Returns:** Item inside the collection
 
@@ -814,7 +821,7 @@ collect({name = 'Liam', language = 'Lua'}):keys():all()
 
 | # | Type | Name | Description |
 | --- | --- | --- | --- |
-| 1 | `function` | arg1 | The value to be represented as a string |
+| 1 | `function` | callback | The function to determine if the value is true |
 
 **Example:**
 
@@ -960,7 +967,7 @@ collect({ {foo = 10}, {foo = 10}, {foo = 20}, {foo = 40} }):median('foo')
 **Example:**
 
 ```lua
-collect('Desk', 'Chair'):merge('Bookcase', 'Door'):all()
+collect({'Desk', 'Chair'}):merge({'Bookcase', 'Door'}):all()
 -- {'Desk', 'Chair', 'Bookcase', 'Door'}
 
 collect({name = 'Liam', language = 'Lua'})
@@ -1040,7 +1047,7 @@ collect({ {foo = 10}, {foo = 10}, {foo = 20}, {foo = 20}, {foo = 40} })
 **Example:**
 
 ```lua
-collect({'Hello', 'world'}):all()
+Collection:new({'Hello', 'world'}):all()
 
 -- {'Hello', 'world'}
 ```
@@ -1080,21 +1087,21 @@ collect({name = 'Liam', language = 'Lua'}):notAssociative():all()
 **Example:**
 
 ```lua
-collect({'a', 'b', 'c', 'd', 'e', 'f'}):nth(4)
+collect({'a', 'b', 'c', 'd', 'e', 'f'}):nth(4):all()
 -- {'a', 'e'}
 
-collect('a', 'b', 'c', 'd', 'e', 'f'):nth(4, 1)
+collect('a', 'b', 'c', 'd', 'e', 'f'):nth(4, 1):all()
 -- {'b', 'f'}
 ```
 
 <hr>
 
 <a name="method-only"></a>
-### `only(only)`
+### `only(keys)`
 
-**Description:** Returns the items in the collection with the specified keys.
+**Description:** Returns only the items in the collection with the specified keys.
 
-For the inverse of `only`, see the [new](#method-except) method.
+For the inverse of `only`, see the [except](#method-except) method.
 
 **Returns:** `Collection`
 
@@ -1102,7 +1109,7 @@ For the inverse of `only`, see the [new](#method-except) method.
 
 | # | Type | Name | Description |
 | --- | --- | --- | --- |
-| 1 | `table` | only | The list of keys to be returned from the original collection |
+| 1 | `table` | keys | The list of keys to be returned from the original collection |
 
 **Example:**
 
@@ -1118,7 +1125,7 @@ collect({name = 'Taylor', language = 'Lua', experiencedYears = 14})
 <a name="method-partition"></a>
 ### `partition(callback)`
 
-**Description:** Returns a pair of elements that pass and fail a given truth test.
+**Description:** Returns a pair of collections, one containing elements that pass a given truth test, and the other containing elements that fail the given truth test.
 
 **Returns:** `Collection`, `Collection` *(pair)*
 
@@ -1135,9 +1142,10 @@ passed, failed = collect({1, 2, 3, 4, 5, 6}):partition(function(key, value)
     return value < 3
 end)
 
--- passed = {1, 2}
--- faiiled = {3, 4, 5, 6}
-
+passed:all()
+-- {1, 2}
+failed:all()
+--{3, 4, 5, 6}
 ```
 
 <hr>
@@ -1203,6 +1211,8 @@ collect({
 
 **Description:** Removes and returns the last item from the collection.
 
+To remove and return the first item in a collection, see the [shift](#method-shift) method.
+
 **Returns:** Last item from the collection
 
 **Example:**
@@ -1246,7 +1256,7 @@ collection:all()
 <hr>
 
 <a name="method-pull"></a>
-### `pull(pulledKey)`
+### `pull(key)`
 
 **Description:** Removes and returns an item from the collection by key.
 
@@ -1256,7 +1266,7 @@ collection:all()
 
 | # | Type | Name | Description |
 | --- | --- | --- | --- |
-| 1 | `string` | pulledKey | The key of the value in the collection |
+| 1 | `string` | key | The key of the value in the collection |
 
 **Example:**
 
@@ -1382,7 +1392,7 @@ end):all()
 <a name="method-resort"></a>
 ### `resort()`
 
-**Description:** Fixes numerical keys to put them in order.
+**Description:** Fixes numerical keys to put them in consecutive order.
 
 **Returns:** `Collection`
 
@@ -1451,6 +1461,8 @@ end)
 
 **Description:** Removes and returns the first item from the collection.
 
+To remove and return the last item in a collection, see the [pop](#method-pop) method.
+
 **Returns:** First item from the collection
 
 **Example:**
@@ -1486,7 +1498,7 @@ collect({1, 2, 3, 4, 5}):shuffle():all()
 <a name="method-slice"></a>
 ### `slice(index, [length])`
 
-**Description:** Returns a slice of the collection at the given index.
+**Description:** Returns a slice of the collection at the given numerical index.
 
 **Returns:** `Collection`
 
@@ -1570,16 +1582,16 @@ end):all()
 <a name="method-sortDesc"></a>
 ### `sortDesc()`
 
-**Description:** `sortDesc()` has the same signature as the `sort()` method, but will sort the collection in the opposite order.
+**Description:** `sortDesc()` accepts the same arguments as the [Collection:sort()](#method-sort) method, but will sort the collection in the opposite order.
 
 <hr>
 
 <a name="method-splice"></a>
 ### `splice(index, [size], [replacements])`
 
-**Description:** Removes and returns a slice of items starting at the specified index.
+**Description:** Returns a slice of items from the original collection, and optionally also replaces them.
 
-**Returns:** `type`
+**Returns:** `Collection`
 
 **Arguments:**
 
@@ -1626,7 +1638,7 @@ collection3:all()
 <a name="method-split"></a>
 ### `split(count)`
 
-**Description:** Breaks the collection into the given number of groups.
+**Description:** Breaks the collection into the given number of groups, provided the original collection has at least that many.
 
 **Returns:** `Collection`
 
@@ -1675,7 +1687,7 @@ collect({ {pages = 176}, {pages = 1096} }):sum('pages')
 
 **Description:** Returns a collection with the specified number of items.
 
-**Returns:** `type`
+**Returns:** `Collection`
 
 **Arguments:**
 
@@ -1730,7 +1742,7 @@ end)
 | # | Type | Name | Description |
 | --- | --- | --- | --- |
 | 1 | `number` | count | Number of times the callback should be executed |
-| 2 | `functiion` | callback | The callback function to execute a number of times |
+| 2 | `function` | callback | The callback function to execute a number of times |
 
 **Example:**
 
@@ -1926,7 +1938,7 @@ end):all()
 
 | # | Type | Name | Description |
 | --- | --- | --- | --- |
-| 1 | `boolean` | condition | The value to be represented as a string |
+| 1 | `boolean` | condition | The condition to check, if `true`, the callback function will be executed |
 | 2 | `function` | callback | The function to be executed when the condition is met |
 
 **Example:**
@@ -2054,7 +2066,7 @@ collect({
 
 | # | Type | Name | Description |
 | --- | --- | --- | --- |
-| 1 | `type` | values | The value to be represented as a string |
+| 1 | `table` | values | The list of values to merge into the collection |
 
 **Example:**
 
