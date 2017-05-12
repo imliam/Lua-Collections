@@ -1555,12 +1555,12 @@ end):all()
 <a name="method-sortAsc"></a>
 ### `sortAsc()`
 
-**Description:** Alias for the [Collection:sort()](#method-sort) method
+**Description:** Alias for the [Collection:sort()](#method-sort) method.
 
 <hr>
 
 <a name="method-sortDesc"></a>
-### `sortAsc()`
+### `sortDesc()`
 
 **Description:** `sortDesc()` has the same signature as the `sort()` method, but will sort the collection in the opposite order.
 
