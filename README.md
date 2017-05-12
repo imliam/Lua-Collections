@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Collections are like tables on steroids. They are designed to act as a fluent wrapper when working with structured data, offering developer convenience for common tasks.
+Collections are like tables on steroids. They are designed to act as a fluent wrapper when working with structured data, offering the developer convenience for common tasks.
 
 For example, we can use the `collect()` helper to create a new collection, shuffle the items around, capitalise the words, add something to it, and then return it in a list suitable for pagination.
 
@@ -127,7 +127,7 @@ collect({ {foo = 10}, {foo = 10}, {foo = 20}, {foo = 40} }):average('foo')
 <a name="method-avg"></a>
 ### `avg()`
 
-**Description:** Alias for the `Collection:average()` method
+**Description:** Alias for the [Collection:average()](#method-average) method
 
 <hr>
 
@@ -911,7 +911,7 @@ collect({ {foo = 10}, {foo = 20} }):max('foo')
 <a name="method-mean"></a>
 ### `mean()`
 
-**Description:** Alias for the `Collection:average()` method
+**Description:** Alias for the [Collection:average()](#method-average) method
 
 <hr>
 
@@ -1267,7 +1267,7 @@ collection:all()
 <a name="method-push"></a>
 ### `push()`
 
-**Description:** Alias for the `Collection:append()` method
+**Description:** Alias for the [Collection:append()](#method-append) method
 
 <hr>
 
@@ -1436,7 +1436,7 @@ end)
 <a name="method-set"></a>
 ### `set()`
 
-**Description:** Alias for the `Collection:put()` method
+**Description:** Alias for the [Collection:put()](#method-put) method
 
 <hr>
 
@@ -1557,7 +1557,7 @@ end):all()
 <a name="method-sortAsc"></a>
 ### `sortAsc()`
 
-**Description:** Alias for the `Collection:sort()` method
+**Description:** Alias for the [Collection:sort()](#method-sort) method
 
 <hr>
 
@@ -1905,7 +1905,7 @@ end):all()
 <a name="method-values"></a>
 ### `values()`
 
-**Description:** Alias for the `Collection:resort()` method
+**Description:** Alias for the [Collection:resort()](#method-resort) method
 
 <hr>
 
