@@ -19,7 +19,7 @@ collect({'Cat', 'Dog', 'Mouse', 'Elephant', 'Hamster', 'Lion'})
 -- { {'DOG', 'CAT', 'LION'}, {'MOUSE', 'HAMSTER', 'ELEPHANT'}, {'Coyote'} }
 ```
 
-This collection class was heavily inspired by the collection functionality found in the[Laravel Framework](https://laravel.com/docs/master/collections) for PHP, and implements many of the methods from it, although with some changes to functionality to account for how Lua handles data.
+This collection class was heavily inspired by the collection functionality found in the [Laravel Framework](https://laravel.com/docs/master/collections) for PHP, and implements many of the methods from it, although with some changes to functionality to account for how Lua handles data.
 
 ## Creating Collections
 
