@@ -1406,7 +1406,7 @@ collect({1, 2, 3, 4, 5}):reverse():all()
 <a name="method-search"></a>
 ### `search(callback)`
 
-**Description:** Searches the collection for a value and returns the key.
+**Description:** Searches the collection for a value and returns the key of the first valid result.
 
 **Returns:** `string`, `number`
 
@@ -1415,7 +1415,7 @@ collect({1, 2, 3, 4, 5}):reverse():all()
 | # | Type | Name | Description |
 | --- | --- | --- | --- |
 | 1 | `string`, `number`, `boolean` | callback | The value to be found in the collection |
-| 1 | `function` | callback | A callback function to perform a truth test. The first result to pass the truth test is returned from the function |
+| 1 | `function` | callback | A callback function to perform a truth test |
 
 **Example:**
 
