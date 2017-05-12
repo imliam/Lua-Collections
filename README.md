@@ -82,6 +82,8 @@ collect({'Hello', 'world'}):all()
 
 **Description:** Adds an item to the end of a collection.
 
+To add an item to the beginning of a collection, see the [prepend](#method-prepend) method.
+
 **Returns:** `Collection`
 
 **Arguments:**
@@ -365,9 +367,9 @@ end)
 <a name="method-except"></a>
 ### `except(keys)`
 
-**Description:** Returns all items in the collection except for those with specified keys.
+**Description:** Returns all items in the collection except those with specified keys.
 
-For the inverse of `except`, see the [new](#method-only) method.
+For the inverse of `except`, see the [only](#method-only) method.
 
 **Returns:** `Collection`
 
@@ -888,6 +890,8 @@ end)
 
 **Description:** Returns the maximum value of a set of given values.
 
+For the reverse of `max`, see the [min](#method-min) method.
+
 **Returns:** `number`
 
 **Arguments:**
@@ -970,6 +974,8 @@ collect({name = 'Liam', language = 'Lua'})
 ### `min([minKey])`
 
 **Description:** Returns the minimum value of a set of given values.
+
+For the reverse of `min`, see the [max](#method-max) method.
 
 **Returns:** `number`
 
@@ -1216,7 +1222,9 @@ collection:all()
 <a name="method-prepend"></a>
 ### `prepend(value)`
 
-**Description:** Adds an item to the beginning of the collection
+**Description:** Adds an item to the beginning of the collection.
+
+To add an item to the end of a collection, see the [append](#method-append) method.
 
 **Returns:** `Collection`
 
