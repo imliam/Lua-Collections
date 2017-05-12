@@ -27,13 +27,14 @@ A collection can be created with the `collect()` helper function, which is merel
 
 ```lua
 collect({'Hello', 'world'})
+```
 
 ## Available Methods
 
 This section covers all of the available methods.
 
-|  -  |  -  |  -  |
-| --- | --- | --- |
+|  -  |  -  |  -  |  -  |
+| --- | --- | --- | --- |
 | [all](#method-all) | [append](#method-append) | [average](#method-average) | [avg](#method-avg) |
 | [chunk](#method-chunk) | [clone](#method-clone) | [collapse](#method-collapse) | [combine](#method-combine) |
 | [contains](#method-contains) | [count](#method-count) | [diff](#method-diff) | [diffKeys](#method-diffKeys) |
