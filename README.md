@@ -258,7 +258,7 @@ end)
 ```lua
 collect({'a', 'b', 'c', 'd', 'e'}):count()
 
--- 4
+-- 5
 ```
 
 <hr>
