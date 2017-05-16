@@ -1,4 +1,4 @@
-Collection = require "collection"
+Collection = require "collections"
 
 function tables_equal(o1, o2, ignore_mt)
     if o1 == o2 then return true end
