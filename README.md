@@ -208,7 +208,7 @@ collect({ {1, 2, 3}, {4, 5, 6}, {7, 8, 9} }):collapse():all()
 **Example:**
 
 ```lua
-collection({'name', 'age'}):combine({'George', 29}):all()
+collect({'name', 'age'}):combine({'George', 29}):all()
 -- {name = 'George', age = 29}
 ```
 
@@ -281,7 +281,7 @@ collect({'a', 'b', 'c', 'd', 'e'}):count()
 **Example:**
 
 ```lua
-collect({1, 2, 3, 4, 5, 6}):diff(2, 4, 6, 8):all()
+collect({1, 2, 3, 4, 5, 6}):diff({2, 4, 6, 8}):all()
 -- {1, 3, 5}
 ```
 
@@ -394,7 +394,7 @@ collect({productID = 1, price=100, discount = false})
 <a name="method-filter"></a>
 ### `filter([callback])`
 
-**Description:** Filters the collection using the given callback, keeping only items that pass a truth test. If no callback is supplied, any "falsey" values will be removed.
+**Description:** Filters the collection using the given callback, keeping only items that pass a truth test. If no callback is supplied, any "falsey" values will be removed. The items in the resulting collection retain their original keys
 
 **Returns:** `Collection`
 
@@ -410,7 +410,7 @@ collect({productID = 1, price=100, discount = false})
 collect({1, 2, 3, 4}):filter(function(key, value)
     return value > 2
 end):all()
--- {3, 4}
+-- {[3] = 3, [4] = 4}
 
 collect({1, 2, 3, nil, false, '', 0, {}}):filter():all()
 -- {1, 2, 3}
@@ -440,7 +440,7 @@ collect({1, 2, 3, 4}):first()
 -- 1
 
 collect({1, 2, 3, 4}):first(function(key, value)
-    value > 2
+    return value > 2
 end)
 -- 3
 ```
@@ -485,7 +485,7 @@ collect({Apple = {name = 'iPhone 6S', brand = 'Apple'}, Samsung = {name = 'Galax
 **Example:**
 
 ```lua
-collect({name = 'Liam', language = 'Lua'})
+collect({name = 'Liam', language = 'Lua'}):flip():all()
 -- {Liam = 'name', Lua = 'language'}
 ```
 
@@ -562,7 +562,7 @@ collect({name = 'Liam', language = 'Lua'}):get('foo', 'Default value')
 collect({name = 'Liam', language = 'Lua'}):get('foo', function(key)
     return '"' .. key .. '" was not found in the collection'
 end)
--- '"foo was not found in the collection'
+-- '"foo" was not found in the collection'
 ```
 
 <hr>
@@ -587,7 +587,7 @@ collect({
     {name = 'Liam', language = 'Lua'},
     {name = 'Jeffrey', language = 'PHP'},
     {name = 'Taylor', language = 'PHP'}
-}):groupBy('language')
+}):groupBy('language'):all()
 
 --[[
     {
@@ -653,13 +653,13 @@ collect({
     {name = 'Liam', language = 'Lua'},
     {name = 'Jeffrey', language = 'PHP'}
 }):implode('language')
---- 'Lua, PHP'
+-- 'Lua, PHP'
 
 collect({
     {name = 'Liam', language = 'Lua'},
     {name = 'Jeffrey', language = 'PHP'}
 }):implode('language', ' | ')
---- 'Lua | PHP'
+-- 'Lua | PHP'
 ```
 
 <hr>
@@ -830,7 +830,7 @@ collect({1, 2, 3, 4}):last()
 -- 4
 
 collect({1, 2, 3, 4}):last(function(key, value)
-    value > 2
+    return value > 2
 end)
 -- 4
 ```
@@ -853,9 +853,10 @@ end)
 **Example:**
 
 ```lua
-collect(1, 2, 3, 4, 5):map(function(key, value)
-    return value * 2
+collect({1, 2, 3, 4, 5}):map(function(key, value)
+    return key, value * 2
 end):all()
+-- {2, 4, 6, 8, 10}
 ```
 
 <hr>
@@ -881,7 +882,7 @@ collect({
     {name = 'Jeffrey', language = 'PHP'}
 }):mapWithKeys(function(key, value)
     return value['language'], value['name']
-end)
+end):all()
 --[[
     {
         Lua = 'Liam',
@@ -972,6 +973,7 @@ collect({'Desk', 'Chair'}):merge({'Bookcase', 'Door'}):all()
 
 collect({name = 'Liam', language = 'Lua'})
         :merge({name = 'Taylor', experiencedYears = 14 })
+        :all()
 -- {name = 'Taylor', language = 'Lua', experiencedYears = 14}
 ```
 
@@ -1090,7 +1092,7 @@ collect({name = 'Liam', language = 'Lua'}):notAssociative():all()
 collect({'a', 'b', 'c', 'd', 'e', 'f'}):nth(4):all()
 -- {'a', 'e'}
 
-collect('a', 'b', 'c', 'd', 'e', 'f'):nth(4, 1):all()
+collect({'a', 'b', 'c', 'd', 'e', 'f'}):nth(4, 1):all()
 -- {'b', 'f'}
 ```
 
@@ -1318,7 +1320,7 @@ collect({name = 'Liam', language = 'Lua'})
 <a name="method-random"></a>
 ### `random([count = 1])`
 
-**Description:** Returns a random item or number of items from the collection.
+**Description:** Returns a random item or as many random unique items from the collection as possible. Does not return the same value twice.
 
 **Returns:** If `count` is more than 1, a `Collection` is returned. If not, an item from the collection is returned.
 
@@ -1357,7 +1359,7 @@ collect({1, 2, 3, 4, 5}):random(3)
 **Example:**
 
 ```lua
-collect({1, 2, 3}):reduce(function(callback, value)
+collect({1, 2, 3}):reduce(function(carry, value)
     return carry + value
 end, 4)
 -- 10
@@ -1558,13 +1560,13 @@ collect({
     {name = 'Desk', colors = {'Black', 'Mahogany'}},
     {name = 'Chair', colors = {'Black'}},
     {name = 'Bookcase', colors = {'Red', 'Beige', 'Brown'}}
-}):sort(function(key, value)
-    return #value['colors']
+}):sort(function(a, b)
+    return #a['colors'] < #b['colors']
 end):all()
 --[[
     {
-        {name = 'Desk', colors = {'Black', 'Mahogany'}},
         {name = 'Chair', colors = {'Black'}},
+        {name = 'Desk', colors = {'Black', 'Mahogany'}},
         {name = 'Bookcase', colors = {'Red', 'Beige', 'Brown'}}
     }
 ]]
@@ -1944,7 +1946,7 @@ end):all()
 **Example:**
 
 ```lua
-collect({1, 2, 3}):when(true, function(callback)
+collect({1, 2, 3}):when(true, function(collection)
     return collection:push(4)
 end):all()
 -- {1, 2, 3, 4}
@@ -2009,7 +2011,7 @@ collect({
     {name = 'Apple Watch', brand = 'Apple', type = 'watch'},
     {name = 'Galaxy S6', brand = 'Samsung', type = 'phone'},
     {name = 'Galaxy Gear', brand = 'Samsung', type = 'watch'}
-}):where('name', {'iPhone 6', 'iPhone 5', 'Galaxy S6'}):all()
+}):whereIn('name', {'iPhone 6', 'iPhone 5', 'Galaxy S6'}):all()
 --[[
     {
         {name = 'iPhone 6', brand = 'Apple', type = 'phone'},
@@ -2044,7 +2046,7 @@ collect({
     {name = 'Apple Watch', brand = 'Apple', type = 'watch'},
     {name = 'Galaxy S6', brand = 'Samsung', type = 'phone'},
     {name = 'Galaxy Gear', brand = 'Samsung', type = 'watch'}
-}):where('name', {'iPhone 6', 'iPhone 5', 'Galaxy S6'}):all()
+}):whereNotIn('name', {'iPhone 6', 'iPhone 5', 'Galaxy S6'}):all()
 --[[
     {
         {name = 'Apple Watch', brand = 'Apple', type = 'watch'},
