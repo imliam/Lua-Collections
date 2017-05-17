@@ -45,7 +45,7 @@ end
 
 --- Breaks the collection into multiple smaller collections of a given size
 function Collection:chunk(count)
-    local chunks = {}
+    local chunks = self:new()
     local currentChunk = {}
 
     if count <= 0 then
@@ -55,15 +55,14 @@ function Collection:chunk(count)
     for key, value in pairs(self.table) do
         table.insert(currentChunk, value)
         if #currentChunk == count then
-            table.insert(chunks, currentChunk)
+            chunks:push(currentChunk)
             currentChunk = {}
         end
     end
     if #currentChunk > 0 then
-        table.insert(chunks, currentChunk)
+        chunks:push(currentChunk)
     end
-    self.table = chunks
-    return self
+    return chunks
 end
 
 --- Returns a copy of the collection
@@ -77,25 +76,24 @@ end
 
 --- Collapses a collection of tables into a single, flat collection
 function Collection:collapse()
-    local collapsed = {}
+    local collapsed = self:new()
     for key, value in pairs(self.table) do
         for innerKey, innerValue in pairs(value) do
-            table.insert(collapsed, innerValue)
+            collapsed:push(innerValue)
         end
     end
-    self.table = collapsed
-    return self
+    return collapsed
 end
 
 --- Combines the keys of the collection with the values of another table
 function Collection:combine(values)
-    local combined = {}
+    local combined = self:new()
     for key, value in pairs(values) do
         if self.table[key] then
-            combined[self.table[key]] = value
+            combined:set(self.table[key], value)
         end
     end
-    return self:new(combined)
+    return combined
 end
 
 --- Determines whether the collection contains a given item
@@ -271,14 +269,13 @@ function Collection:except(keys)
         exceptList[value] = true
     end
 
-    local tbl = {}
+    local tbl = self:new()
     for key, value in pairs(self.table) do
         if not exceptList[key] then
-            tbl[key] = value
+            tbl:set(key, value)
         end
     end
-    self.table = tbl
-    return self
+    return tbl
 end
 
 --- Internal function used to determine if a value is falsey
@@ -290,8 +287,8 @@ function Collection:falsyValue(value)
     end
 
     if type(value) == 'table' then
-        if next(value) then
-            return false
+        if next(value) == nil then
+            return true
         end
     end
 
@@ -304,7 +301,7 @@ end
 
 --- Filters the collection using the given callback, keeping only items that pass a truth test
 function Collection:filter(callback)
-    local filtered = {}
+    local filtered = self:new()
     for key, value in pairs(self.table) do
         local response = false
         if callback then
@@ -313,11 +310,10 @@ function Collection:filter(callback)
             response = true
         end
         if response then
-            filtered[key] = value
+            filtered:set(key, value)
         end
     end
-    self.table = filtered
-    return self
+    return filtered
 end
 
 --- Returns the first element in the collection, or that passes a truth test
@@ -580,14 +576,15 @@ end
 
 --- Merges the given table with the original collection
 function Collection:merge(toMerge)
+    local merged = self:clone()
     for key, value in pairs(toMerge) do
         if type(key) == 'number' then
-            table.insert(self.table, value)
+            merged:push(value)
         else
-            self.table[key] = value
+            merged:set(key, value)
         end
     end
-    return self
+    return merged
 end
 
 --- Returns the minimum value of a set of given values
@@ -611,7 +608,7 @@ end
 function Collection:mode(modeKey)
     local counts = {}
 
-    for key, value in pairs( self.table ) do
+    for key, value in pairs(self.table) do
         if modeKey then
             value = value[modeKey]
         end
