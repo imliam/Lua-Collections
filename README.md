@@ -22,6 +22,8 @@ collect({'Cat', 'Dog', 'Mouse', 'Elephant', 'Hamster', 'Lion'})
 
 This collection class was heavily inspired by the collection functionality found in the [Laravel Framework](https://laravel.com/docs/master/collections) for PHP, and implements many of the methods from it, although with some changes to functionality to account for how Lua handles data.
 
+Please note that most collection methods are immutable, meaning they return a modified copy of the original collection. However, some methods modify the original collection by design: append *(push)*, forget *(remove)*, insert, pop, prepend, pull, put *(set)*, shift, splice
+
 ## Features
 
 - Pure Lua - no C package to worry about!
@@ -103,7 +105,7 @@ collect({'Hello', 'world'}):all()
 
 To add an item to the beginning of a collection, see the [prepend](#method-prepend) method.
 
-**Returns:** `Collection`
+**Returns:** Original `Collection`
 
 **Arguments:**
 
@@ -157,7 +159,7 @@ collect({ {foo = 10}, {foo = 10}, {foo = 20}, {foo = 40} }):average('foo')
 
 **Description:** Breaks the collection into multiple smaller collections of a given size. Especially useful when dynamically paginating data, or displaying items in a grid. If the count is less than 1, a single empty table will be returned in the collection.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -179,7 +181,7 @@ collect({1, 2, 3, 4, 5, 6, 7}):chunk(4):all()
 
 **Description:** Returns a copy of the collection.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Example:**
 
@@ -200,7 +202,7 @@ collection:all()
 
 **Description:** Collapses a collection of tables into a single, flat collection
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Example:**
 
@@ -216,7 +218,7 @@ collect({ {1, 2, 3}, {4, 5, 6}, {7, 8, 9} }):collapse():all()
 
 **Description:** Combines the keys of the collection with the values of another table
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -279,7 +281,7 @@ assert(collect({ {'Cat', 'Dog'}, {'Rabbit', 'Mouse'} }):contains('Cat')
 
 **Description:** Turns an associative table into an indexed one, removing string keys.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Example:**
 
@@ -312,7 +314,7 @@ collect({'a', 'b', 'c', 'd', 'e'}):count()
 
 **Description:** Deals the collection into a number of groups in order one at a time - like dealing a hand of cards.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -341,7 +343,7 @@ collect({1, 2, 3, 4, 5, 6, 7, 8, 9, 10}):deal(3):all()
 
 **Description:** Compares a collection against another table based on its values. Returns the values in the original collection that are not present in the given table.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -364,7 +366,7 @@ collect({1, 2, 3, 4, 5, 6}):diff({2, 4, 6, 8}):all()
 **Description:** Compares the collection against another table based on its keys. Returns the key / value pairs in the original collection that are not present in the table.
 
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -389,7 +391,7 @@ collect({one = 10, two = 20, three = 30, four = 40, five = 50})
 
 **Description:** Iterates over the items in the collection and passes each to a callback.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -416,7 +418,7 @@ end)
 
 **Description:** Iterates over the items with a consecutive numeric index in the collection and passes each to a callback.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -496,7 +498,7 @@ end)
 
 For the inverse of `except`, see the [only](#method-only) method.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -521,7 +523,7 @@ collect({productID = 1, price=100, discount = false})
 
 **Description:** Filters the collection using the given callback, keeping only items that pass a truth test. If no callback is supplied, any "falsy" values will be removed. The items in the resulting collection retain their original keys
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -577,7 +579,7 @@ end)
 
 **Description:** Flattens a multi-dimensional collection into a single dimension.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -605,7 +607,7 @@ collect({Apple = {name = 'iPhone 6S', brand = 'Apple'}, Samsung = {name = 'Galax
 
 **Description:** Swaps the collection's keys with their corresponding values.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Example:**
 
@@ -635,7 +637,7 @@ collect({name = 'Liam', language = 'Lua'}):flip():all()
 
 **Description:** Removes an item from the collection by its key.
 
-**Returns:** `Collection`
+**Returns:** Original `Collection`
 
 **Arguments:**
 
@@ -657,7 +659,7 @@ collect({name = 'Liam', language = 'Lua'}):forget('language'):all()
 
 **Description:** Returns a collection containing the items that would be present for a given page number.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -711,7 +713,7 @@ end)
 
 **Description:** Groups the collection's items by a given key
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -808,7 +810,7 @@ collect({
 
 **Description:** Inserts a value at a given numeric index.
 
-**Returns:** `Collection`
+**Returns:** Original `Collection`
 
 **Arguments:**
 
@@ -831,7 +833,7 @@ collect({'Cat', 'Dog', 'Hamster', 'Walrus'}):insert('Mouse', 3):all()
 
 **Description:** Removes any values from the original collection that are not present in the passed table. The resulting collection preserves the original collection's keys.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -912,7 +914,7 @@ collect():isNotEmpty()
 
 **Description:** Keys the collection by the given key. If multiple items have the same key, only the last one will appear in the returned collection.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -959,7 +961,7 @@ end):all()
 
 **Description:** Returns a list of the collection's keys
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Example:**
 
@@ -1004,7 +1006,7 @@ end)
 
 **Description:** Iterates through the collection and passes each value to the callback, which can then modify the values, forming a new collection.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -1028,7 +1030,7 @@ end):all()
 
 **Description:** Iterates through the the collection and remaps the key and value based on the return of a callback.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -1119,7 +1121,7 @@ collect({ {foo = 10}, {foo = 10}, {foo = 20}, {foo = 40} }):median('foo')
 
 **Description:** Merges the given table with the original collection. If a string key in the passed table matches a string key in the original collection, the given table's value will overwrite the value in the original collection.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -1173,7 +1175,7 @@ collect({ {foo = 10}, {foo = 20} }):min('foo')
 
 **Description:** Returns the <a href="https://en.wikipedia.org/wiki/Mode_(statistics)">mode value</a> of a given key. The value returned is a collection of numbers.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -1200,7 +1202,7 @@ collect({ {foo = 10}, {foo = 10}, {foo = 20}, {foo = 20}, {foo = 40} })
 
 **Description:** Creates a new collection instance
 
-**Returns:** `Collection` *(new)*
+**Returns:** `Collection` *New (new)*
 
 **Arguments:**
 
@@ -1223,7 +1225,7 @@ Collection:new({'Hello', 'world'}):all()
 
 **Description:** -- Creates a new collection consisting of every nth element, with an optional offset.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -1251,7 +1253,7 @@ collect({'a', 'b', 'c', 'd', 'e', 'f'}):nth(4, 1):all()
 
 For the inverse of `only`, see the [except](#method-except) method.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -1275,7 +1277,7 @@ collect({name = 'Taylor', language = 'Lua', experiencedYears = 14})
 
 **Description:** Returns a pair of collections, one containing elements that pass a given truth test, and the other containing elements that fail the given truth test.
 
-**Returns:** `Collection`, `Collection` *(pair)*
+**Returns:** `Collection`, `Collection` *New (pair)*
 
 **Arguments:**
 
@@ -1327,7 +1329,7 @@ end)
 
 **Description:** Retrives all of the values for a given key.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -1357,7 +1359,7 @@ collect({
 <a name="method-pop"></a>
 ## `pop()`
 
-**Description:** Removes and returns the last item from the collection.
+**Description:** Removes and returns the last item from the collection. This method modifies the original collection.
 
 To remove and return the first item in a collection, see the [shift](#method-shift) method.
 
@@ -1384,7 +1386,7 @@ collection:all()
 
 To add an item to the end of a collection, see the [append](#method-append) method.
 
-**Returns:** `Collection`
+**Returns:** Original `Collection`
 
 **Arguments:**
 
@@ -1406,7 +1408,7 @@ collection:all()
 <a name="method-pull"></a>
 ## `pull(key)`
 
-**Description:** Removes and returns an item from the collection by key.
+**Description:** Removes and returns an item from the collection by key. This method modifies the original collection.
 
 **Returns:** Item from the collection
 
@@ -1442,7 +1444,7 @@ collection:all()
 
 **Description:** Sets the given key and value in the collection. If a key already exists in the collection, it is overwritten.
 
-**Returns:** `Collection`
+**Returns:** Original `Collection`
 
 **Arguments:**
 
@@ -1468,7 +1470,7 @@ collect({name = 'Liam', language = 'Lua'})
 
 **Description:** Returns a random item or as many random unique items from the collection as possible.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -1525,7 +1527,7 @@ end, 4)
 
 **Description:** Filters the collection using the given fallback. If the callback returns `true`, the item is removed from the collection.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -1563,7 +1565,7 @@ end):all()
 
 **Description:** Fixes numerical keys to put them in consecutive order.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Example:**
 
@@ -1579,7 +1581,7 @@ collect({[1] = 'a', [5] = 'b'}):resort():all()
 
 **Description:** Reverses the order of the numerical keys in the collection.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Example:**
 
@@ -1628,7 +1630,7 @@ end)
 <a name="method-shift"></a>
 ## `shift()`
 
-**Description:** Removes and returns the first item from the collection.
+**Description:** Removes and returns the first item from the collection. This method modifies the original collection.
 
 To remove and return the last item in a collection, see the [pop](#method-pop) method.
 
@@ -1653,7 +1655,7 @@ collection:all()
 
 **Description:** Randomly shuffles the order of items in the collection.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Example:**
 
@@ -1669,7 +1671,7 @@ collect({1, 2, 3, 4, 5}):shuffle():all()
 
 **Description:** Returns a slice of the collection at the given numerical index.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -1695,7 +1697,7 @@ collect({1, 2, 3, 4, 5, 6, 7, 8, 9, 10}):slice(4, 2):all()
 
 **Description:** Sorts the items in the collection.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -1758,9 +1760,9 @@ end):all()
 <a name="method-splice"></a>
 ## `splice(index, [size], [replacements])`
 
-**Description:** Returns a slice of items from the original collection, and optionally also replaces them.
+**Description:** Returns a slice of items from the original collection, and optionally also replaces them. This method modifies the original collection
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -1809,7 +1811,7 @@ collection3:all()
 
 **Description:** Breaks the collection into the given number of groups, provided the original collection has at least that many. Note that the groups will be first-heavy, not evenly distributed.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -1859,7 +1861,7 @@ collect({ {pages = 176}, {pages = 1096} }):sum('pages')
 
 **Description:** Returns a collection with the specified number of items.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -1884,7 +1886,7 @@ collect({1, 2, 3, 4, 5}):take(-2):all()
 
 **Description:** Executes the given callback, passing the collection as an argument, without affecting the collection itself.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -1907,7 +1909,7 @@ end)
 
 **Description:** Creates a new collection by invoking the callback a given amount of times.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -1990,7 +1992,7 @@ collect({1, 2, 3, 4, 5}):toTable()
 
 **Description:** Iterates over the collection and calls the given callback with each item in the collection, replacing the values in the collection with the response.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -2014,7 +2016,7 @@ end):all()
 
 **Description:** Adds the given table to the collection. If the given table contains keys that are in the collection, the original collection's values will be kept.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -2038,7 +2040,7 @@ collect({a = 'Hello', b = 'Goodbye'})
 
 **Description:** Returns all of the unique items in the collection
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -2105,7 +2107,7 @@ end):all()
 
 **Description:** Executes the given callback when a condition is met.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -2130,7 +2132,7 @@ end):all()
 
 **Description:** Filters the collection by a given key / value pair.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -2164,7 +2166,7 @@ collect({
 
 **Description:** Filters the collection by a given key / value pair contained within the given table.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -2199,7 +2201,7 @@ collect({
 
 **Description:** Filters the collection by a given key / value pair not contained within the given table.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
@@ -2233,7 +2235,7 @@ collect({
 
 **Description:** Merges the value of the given table to the value of the original collection at the same index, if it exists in the original collection.
 
-**Returns:** `Collection`
+**Returns:** New `Collection`
 
 **Arguments:**
 
