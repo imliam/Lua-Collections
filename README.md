@@ -519,7 +519,7 @@ collect({productID = 1, price=100, discount = false})
 <a name="method-filter"></a>
 ## `filter([callback])`
 
-**Description:** Filters the collection using the given callback, keeping only items that pass a truth test. If no callback is supplied, any "falsey" values will be removed. The items in the resulting collection retain their original keys
+**Description:** Filters the collection using the given callback, keeping only items that pass a truth test. If no callback is supplied, any "falsy" values will be removed. The items in the resulting collection retain their original keys
 
 **Returns:** `Collection`
 

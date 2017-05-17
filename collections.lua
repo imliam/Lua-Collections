@@ -282,7 +282,7 @@ function Collection:except(keys)
 end
 
 --- Internal function used to determine if a value is falsey
-function Collection:falseyValue(value)
+function Collection:falsyValue(value)
     for k, v in ipairs({0, false, ''}) do
         if v == value then
             return true
@@ -290,12 +290,8 @@ function Collection:falseyValue(value)
     end
 
     if type(value) == 'table' then
-        local i = 0
-        for k, v in pairs(value) do
-            i = i + 1
-        end
-        if i == 0 then
-            return true
+        if next(value) then
+            return false
         end
     end
 
@@ -313,7 +309,7 @@ function Collection:filter(callback)
         local response = false
         if callback then
             response = callback(key, value)
-        elseif not self:falseyValue(value) then
+        elseif not self:falsyValue(value) then
             response = true
         end
         if response then
@@ -792,7 +788,7 @@ function Collection:reject(callback)
         local rejected = false
         if callback then
             rejected = callback(key, value)
-        elseif not self:falseyValue(value) then
+        elseif not self:falsyValue(value) then
             rejected = true
         end
         if not rejected then
