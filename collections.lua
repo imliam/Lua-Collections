@@ -2,13 +2,14 @@
 --
 -- @module collections.lua
 -- @alias Collection
+-- @url https://github.com/ImLiam/Lua-Collections
 
 local Collection = {}
-Collection.version = '0.1'
+Collection.version = '0.2.0'
 
 --- Creates a new collection instance
 function Collection:new(tbl)
-    return setmetatable({ table = tbl or {} }, { __index = Collection })
+    return setmetatable({ table = tbl or {} }, { __index = self, __tostring = self.toString })
 end
 
 --- Alias for the Collection:new() method
@@ -34,14 +35,10 @@ function Collection:average(key)
 end
 
 --- Alias for the Collection:average() method
-function Collection:avg(key)
-    return self:average(key)
-end
+Collection.avg = Collection.average
 
 --- Alias for the Collection:average() method
-function Collection:mean(key)
-    return self:average(key)
-end
+Collection.mean = Collection.average
 
 --- Returns the total number of items in the collection
 function Collection:count()
@@ -55,9 +52,13 @@ end
 --- Returns the sum of items in the collection
 function Collection:sum(key)
     local sum = 0
-    for _, value in pairs(self.table) do
+    for i, value in pairs(self.table) do
         if key then
-            sum = sum + value[key]
+            if value[key] then
+                sum = sum + value[key]
+            else
+                error('Value "' .. key .. '" does not exist in collection object with key "' .. i .. '"')
+            end
         else
             sum = sum + value
         end
@@ -69,6 +70,11 @@ end
 function Collection:chunk(count)
     local chunks = {}
     local currentChunk = {}
+
+    if count <= 0 then
+        return Collection:new({ {} })
+    end
+
     for key, value in pairs(self.table) do
         table.insert(currentChunk, value)
         if #currentChunk == count then
@@ -103,11 +109,11 @@ function Collection:combine(values)
             combined[self.table[key]] = value
         end
     end
-    return Collection:new(combined)
+    return self:new(combined)
 end
 
 --- Determines whether the collection contains a given item
-function Collection:contains(containValue)
+function Collection:contains(containValue, recursive)
 
     local function checkContains(key, value)
         if type(containValue) == 'function' then
@@ -120,19 +126,21 @@ function Collection:contains(containValue)
                 return true
             end
         end
+        return false
     end
 
     for key, value in pairs(self.table) do
         local result
-        if type(value) == 'table' then
+        if type(value) == 'table' and recursive then
             for innerKey, innerValue in pairs(value) do
-                result = checkContains(innerKey, innerValue)
+                if checkContains(innerKey, innerValue) then
+                    return true
+                end
             end
         else
-            result = checkContains(key, value)
-        end
-        if result then
-            return true
+            if checkContains(key, value) then
+                return true
+            end
         end
     end
 
@@ -147,7 +155,7 @@ function Collection:diff(difference)
         differenceList[value] = true
     end
 
-    local finalDifferences = Collection:new()
+    local finalDifferences = self:new()
     for key, value in pairs(self.table) do
         if not differenceList[value] then
             finalDifferences:push(value)
@@ -164,7 +172,7 @@ function Collection:diffKeys(difference)
         differenceList[key] = true
     end
 
-    local finalDifferences = Collection:new()
+    local finalDifferences = self:new()
     for key, value in pairs(self.table) do
         if not differenceList[key] then
             finalDifferences:set(key, value)
@@ -182,6 +190,22 @@ function Collection:each(callback)
     end
     return self
 end
+
+--- Alias for the Collection:each() method
+Collection.forEach = Collection.each
+
+--- Iterates over the numerically indexed items in the collection and passes each to a callback
+function Collection:eachi(callback)
+    for key, value in ipairs(self.table) do
+        if callback(key, value) == false then
+            break
+        end
+    end
+    return self
+end
+
+--- Alias for the Collection:eachi() method
+Collection.forEachi = Collection.eachi
 
 --- Verify that all elements of the collection pass a truth test
 function Collection:every(callback)
@@ -283,23 +307,23 @@ end
 
 --- Iterates through the collection and passes each value to the callback, which can then modify the values
 function Collection:map(callback)
-    local remapped = Collection:new()
+    local remapped = self:new()
     for key, value in pairs(self.table) do
         newKey, newValue = callback(key, value)
-        remapped.set(newKey, newValue)
+        remapped:set(newKey, newValue)
     end
     return remapped
 end
 
 --- Flattens a multi-dimensional collection into a single dimension
 function Collection:flatten(depth, tbl, currentDepth)
-    local flattened = Collection:new()
+    local flattened = self:new()
     local iterable = tbl or self.table
     currentDepth = currentDepth or 0
     for key, value in pairs(iterable) do
         if type(value) == 'table'
-           and ((depth and currentDepth < depth) or not depth) then
-            flatInside = self:flatten(depth, value, currentDepth + 1)
+           and ((depth and currentDepth < depth - 1) or not depth) then
+            flatInside = self:flatten(depth, value, currentDepth + 1):all()
             for k, v in pairs(flatInside) do
                 flattened:push(v)
             end
@@ -316,9 +340,9 @@ end
 
 --- Swaps the collection's keys with their corresponding values
 function Collection:flip()
-    local flipped = Collection:new()
+    local flipped = self:new()
     for key, value in pairs(self.table) do
-        flipped.set(key, value)
+        flipped:set(value, key)
     end
     return flipped
 end
@@ -331,9 +355,12 @@ function Collection:forget(key)
     return self
 end
 
+--- Alias for the Collection:forget() method
+Collection.remove = Collection.forget
+
 --- Returns a collection containing the items that would be present for a given page number
 function Collection:forPage(pageNumber, perPage)
-    local page = Collection:new()
+    local page = self:new()
     local i = 1
     for key, value in pairs(self.table) do
         if i > (pageNumber - 1) * perPage and i <= pageNumber * perPage then
@@ -348,7 +375,7 @@ end
 function Collection:get(key, default)
     if self.table[key] then
         return self.table[key]
-    elseif default
+    elseif default then
         if type(default) == 'function' then
             return default(key)
         else
@@ -359,14 +386,14 @@ end
 
 --- Groups the collection's items by a given key
 function Collection:groupBy(groupKey)
-    local grouped = Collection:new()
+    local grouped = self:new()
     for key, value in pairs(self.table) do
 
         local currentGroupKey = groupKey
 
         if value[currentGroupKey] then
-            if not grouped.has(value[currentGroupKey]) then
-                grouped.set(value[currentGroupKey], {})
+            if not grouped:has(value[currentGroupKey]) then
+                grouped:set(value[currentGroupKey], {})
             end
             table.insert(grouped.table[value[currentGroupKey]], value)
         end
@@ -376,13 +403,16 @@ function Collection:groupBy(groupKey)
 end
 
 --- Turns an associative table into an indexed one, removing string keys
-function Collection:notAssociative()
-    local notAssociative = Collection:new()
+function Collection:convertToIndexed()
+    local notAssociative = self:new()
     for key, value in pairs(self.table) do
         notAssociative:push(value)
     end
     return notAssociative
 end
+
+--- Alias for the Collection:convertToIndexed() method
+Collection.deassociate = Collection.convertToIndexed
 
 --- Determines if a given key exists in the collection
 function Collection:has(key)
@@ -390,6 +420,38 @@ function Collection:has(key)
         return true
     end
     return false
+end
+
+--- Compares a table with the internal table of the collection
+function Collection:equals(tbl, ignoreMetatables, tbl2)
+    tbl2 = tbl2 or self.table
+    if tbl == tbl2 then return true end
+    local tblType = type(tbl)
+    local tbl2Type = type(tbl2)
+    if tblType ~= tbl2Type then return false end
+    if tblType ~= 'table' then return false end
+
+    if not ignoreMetatables then
+        local mt1 = getmetatable(tbl)
+        if mt1 and mt1.__eq then
+            return tbl == tbl2
+        end
+    end
+
+    local keySet = {}
+
+    for key1, value1 in pairs(tbl) do
+        local value2 = tbl2[key1]
+        if value2 == nil or self:equals(value1, ignoreMetatables, value2) == false then
+            return false
+        end
+        keySet[key1] = true
+    end
+
+    for key2, _ in pairs(tbl2) do
+        if not keySet[key2] then return false end
+    end
+    return true
 end
 
 --- Joins the items in a collection into a string
@@ -409,7 +471,7 @@ end
 
 --- Removes any values from the original collection that are not present in the passed table
 function Collection:intersect(intersection)
-    local intersected = Collection:new()
+    local intersected = self:new()
     local intersection = collect(intersection):flip():all()
 
     for key, value in pairs(self.table) do
@@ -439,7 +501,7 @@ end
 
 --- Keys the collection by the given key
 function Collection:keyBy(keyName)
-    local keyed = Collection:new()
+    local keyed = self:new()
     for key, value in pairs(self.table) do
         if type(keyName) == 'function' then
             local response = keyName(key, value)
@@ -448,12 +510,12 @@ function Collection:keyBy(keyName)
             keyed:set(value[keyName], value)
         end
     end
-    keyed
+    return keyed
 end
 
 --- Returns a list of the collection's keys
 function Collection:keys()
-    local keys = Collection:new()
+    local keys = self:new()
     for key, value in pairs(self.table) do
         keys:push(key)
     end
@@ -462,9 +524,9 @@ end
 
 --- Iterates through the the collection and remaps the key and value based on the return of a callback
 function Collection:mapWithKeys(callback)
-    local mapped = Collection:new()
+    local mapped = self:new()
     for key, value in pairs(self.table) do
-        local k, v = callback(value)
+        local k, v = callback(key, value)
         mapped:set(k, v)
     end
     return mapped
@@ -492,7 +554,7 @@ function Collection:min(minKey)
     local min
     for key, value in pairs(self.table) do
         if minKey then
-            if not min or value[minKey] > min then
+            if not min or value[minKey] < min then
                 min = value[minKey]
             end
         else
@@ -558,7 +620,7 @@ function Collection:mode(modeKey)
         end
     end
 
-    local temp = Collection:new()
+    local temp = self:new()
 
     for key, value in pairs(counts) do
         if value == biggestCount then
@@ -571,7 +633,7 @@ end
 
 --- Creates a new collection consisting of every nth element
 function Collection:nth(step, offset)
-    local nth = Collection:new()
+    local nth = self:new()
     local position = 1
     offset = (offset and offset + 1) or 1
 
@@ -592,7 +654,7 @@ function Collection:only(keys)
         onlyList[value] = true
     end
 
-    local tbl = Collection:new()
+    local tbl = self:new()
     for key, value in pairs(self.table) do
         if onlyList[key] then
             tbl:set(key, value)
@@ -609,9 +671,9 @@ function Collection:partition(callback)
     for key, value in pairs(self.table) do
         local result = callback(key, value)
         if result then
-            table.insert(valid, value)
+            valid:push(value)
         else
-            table.insert(invalid, value)
+            invalid:push(value)
         end
     end
 
@@ -625,13 +687,13 @@ end
 
 --- Retrives all of the values for a given key
 function Collection:pluck(valueName, keyName)
-    local plucked = Collection:new()
+    local plucked = self:new()
     for key, value in pairs(self.table) do
         if value[valueName] then
             if keyName then
-                plucked[value[keyName]] = value[valueName]
+                plucked:set(value[keyName], value[valueName])
             else
-                table.insert(plucked, value[valueName])
+                plucked:push(value[valueName])
             end
         end
     end
@@ -667,8 +729,12 @@ function Collection:append(value)
 end
 
 --- Alias for the Collection:append() method
-function Collection:push(value)
-    return self:append(value)
+Collection.push = Collection.append
+
+--- Inserts a value at a given numeric index
+function Collection:insert(value, position)
+    table.insert(self.table, position, value)
+    return self
 end
 
 --- Sets the given key and value in the collection
@@ -678,19 +744,26 @@ function Collection:put(key, value)
 end
 
 --- Alias for the Collection:put() method
-function Collection:set(key, value)
-    return self:put(key, value)
-end
+Collection.set = Collection.put
 
 --- Returns a random item or number of items from the collection
-function Collection:random(count)
-    local all = Collection:new(self.table):notAssociative():all()
-    local random = Collection:new()
+function Collection:random(count, rep)
+    local all = self:new(self.table):convertToIndexed():all()
+    local random = self:new()
     count = count or 1
+
+    if count < 0 then
+        error('Positive number expected, negative number given.')
+    end
 
     for i = 1, count do
         if #all > 0 then
-            local randomElement = table.remove(all, math.random(#all))
+            local randomElement
+            if rep then
+                randomElement = all[math.random(#all)]
+            else
+                randomElement = table.remove(all, math.random(#all))
+            end
             random:push(randomElement)
         end
     end
@@ -712,7 +785,7 @@ end
 
 --- Filters the collection using the given fallback
 function Collection:reject(callback)
-    local notRejected = Collection:new()
+    local notRejected = self:new()
     for key, value in pairs(self.table) do
         local rejected = false
         if callback then
@@ -721,7 +794,7 @@ function Collection:reject(callback)
             rejected = true
         end
         if not rejected then
-            notRejected[key] = value
+            notRejected:set(key, value)
         end
     end
     return notRejected
@@ -729,7 +802,7 @@ end
 
 --- Fixes numerical keys to put them in order
 function Collection:resort()
-    local sorted = Collection:new()
+    local sorted = self:new()
     for key, value in pairs(self.table) do
         if type(key) == 'number' then
             sorted:push(value)
@@ -741,18 +814,16 @@ function Collection:resort()
 end
 
 --- Alias for the Collection:resort() method
-function Collection:values()
-    return self:resort()
-end
+Collection.values = Collection.resort
 
 --- Reverses the order of the numerical keys in the collection
 function Collection:reverse()
-    local reversed = Collection:new()
+    local reversed = self:new()
     for key, value in pairs(self.table) do
         if type(key) == 'number' then
-            table.insert(reversed, 1, value)
+            reversed:prepend(value)
         else
-            reversed[key] = value
+            reversed:set(key, value)
         end
     end
     return reversed
@@ -789,12 +860,22 @@ end
 
 --- Randomly shuffles the order of items in the collection
 function Collection:shuffle()
-    local shuffled = Collection:new()
+    local shuffled = self:new()
+    local numericKeys = {}
+    local numericValues = {}
     for key, value in pairs(self.table) do
         if type(key) == 'number' then
-            table.insert(shuffled, #shuffled, value)
+            table.insert(numericKeys, key)
+            table.insert(numericValues, value)
+        end
+    end
+
+    for key, value in pairs(self.table) do
+        if type(key) == 'number' then
+            shuffled:set(table.remove(numericKeys, math.random(#numericKeys)), table.remove(numericValues, math.random(#numericValues)))
+            -- todo: make this push into a random spot in the array
         else
-            shuffled[key] = value
+            shuffled:set(key, value)
         end
     end
     return shuffled
@@ -802,7 +883,7 @@ end
 
 --- Returns a slice of the collection at the given index
 function Collection:slice(index, size)
-    local slice = Collection:new()
+    local slice = self:new()
     local i = 0
     for key, value in ipairs(self.table) do
         if key >= index + 1 then
@@ -832,15 +913,14 @@ function Collection:sort(callback)
 end
 
 --- Alias for the Collection:sort() method
-function Collection:sortAsc(callback)
-    return self:sort(callback)
-end
+Collection.sortAsc = Collection.sort
 
 --- Same as the Collection:sort() method, but returns the collection in the opposite order
 function Collection:sortDesc(callback)
     local sorted = self:clone()
     if callback and type(callback) == 'function' then
         table.sort(sorted.table, callback)
+        sorted = sorted:reverse()
     elseif callback then
         table.sort(sorted.table, function(a, b) return a[callback] > b[callback] end)
     else
@@ -855,12 +935,12 @@ function Collection:clone()
     for key, value in pairs(self.table) do
         cloned[key] = value
     end
-    return Collection:new(cloned)
+    return self:new(cloned)
 end
 
 --- Removes and returns a slice of items starting at the specified index
 function Collection:splice(index, size, replacements)
-    local spliced = Collection:new()
+    local spliced = self:new()
     local toRemove = {}
     local i = 0
     for key, value in ipairs(self.table) do
@@ -891,33 +971,42 @@ function Collection:splice(index, size, replacements)
 
     if replacements then
         for i = 1, #replacements do
-            table.insert(self.table, index + 1, table.remove(replacements, 1))
+            self:insert(table.remove(replacements, #replacements), index + 1)
         end
     end
 
     return spliced
 end
 
+--- Alias for the Collection:average() method
+Collection.replace = Collection.splice
+
 --- Breaks the collection into the given number of groups
 function Collection:split(count)
-    local splitted = Collection:new()
-    local currentSection = {}
+    local groupSize = math.ceil(self:count() / count)
+    return self:chunk(groupSize)
+end
+
+--- Deals the collection into a number of groups in order, one at a time
+function Collection:deal(hands)
+    local splitted = self:times(hands, function() return {} end)
+    local currentSection = 1
+
     for key, value in pairs(self.table) do
-        table.insert(currentSection, value)
-        if #currentSection == count then
-            splitted:append(currentSection)
-            currentSection = {}
+        table.insert(splitted.table[currentSection], value)
+
+        currentSection = currentSection + 1
+        if currentSection > #splitted.table then
+            currentSection = 1
         end
     end
-    if #currentSection > 0 then
-        splitted:append(currentSection)
-    end
+
     return splitted
 end
 
 --- Returns a collection with the specified number of items
 function Collection:take(count)
-    taken = Collection:new()
+    taken = self:new()
     if count >= 0 then
         for i = 1, count do
             if self.table[i] then
@@ -944,7 +1033,7 @@ function Collection:take(count)
 end
 
 --- Determines whether the collection is associative
-function isAssociative()
+function Collection:isAssociative()
     if self:count() > #self.table then
         return true
     end
@@ -963,7 +1052,7 @@ function Collection:times(count, callback)
     for i = 1, count do
         table.insert(tbl, callback(i, tbl))
     end
-    return Collection:new(tbl)
+    return self:new(tbl)
 end
 
 --- Returns a reference to the underlying table of the collection
@@ -983,7 +1072,7 @@ function Collection:tableToJSON(tbl)
         if type(value) == 'table' then
             return self:tableToJSON(value)
         elseif type(value) == 'string' then
-            return '"' .. value:gub('"', '\\"') .. '"'
+            return '"' .. value:gsub('"', '\\"') .. '"'
         elseif type(value) == 'number' then
             return value
         elseif type(value) == 'boolean' then
@@ -996,7 +1085,7 @@ function Collection:tableToJSON(tbl)
         for key, value in pairs(tbl) do
             local json = jsonRepresentation(value)
             if json then
-                json = '"' .. key:gub('"', '\\"') .. '":' .. json
+                json = '"' .. key:gsub('"', '\\"') .. '":' .. json
                 table.insert(jsonElements, json)
             end
         end
@@ -1040,7 +1129,7 @@ function Collection:tableToString(tbl)
                 luaString = '[' .. key .. ']=' .. luaString
             elseif type(key) == 'string' then
                 if key:match('%W') then
-                    luaString = '["' .. key:gub('"', '\\"') .. '"]=' .. luaString
+                    luaString = '["' .. key:gsub('"', '\\"') .. '"]=' .. luaString
                 else
                     luaString = key .. '=' .. luaString
                 end
@@ -1066,7 +1155,7 @@ end
 
 --- Iterates over the collection and calls the given callback with each item in the collection, replacing the values in the collection with the response
 function Collection:transform(callback)
-    local transformed = Collection:new()
+    local transformed = self:new()
     for key, value in pairs(self.table) do
         transformed:set(key, callback(key, value))
     end
@@ -1086,11 +1175,18 @@ end
 
 --- Returns all of the unique items in the collection
 function Collection:unique(callback)
+    local unique = self:new()
     local keyList = {}
+
     for key, value in pairs(self.table) do
         local result
 
-        local valueToCheck = callback and callback(key, value) or value
+        local valueToCheck = value
+        if type(callback) == 'function' then
+            valueToCheck = callback(key, value)
+        elseif callback then
+            valueToCheck = value[callback]
+        end
         if keyList[valueToCheck] ~= nil then
             keyList[valueToCheck] = false
         else
@@ -1098,12 +1194,12 @@ function Collection:unique(callback)
         end
     end
 
-    local unique = Collection:new()
-    for _, key in pairs(keyList) do
+    for value, key in pairs(keyList) do
         if key ~= false then
             unique:push(self:get(key))
         end
     end
+
     return unique
 end
 
@@ -1117,7 +1213,7 @@ end
 
 --- Filters the collection by a given key / value pair
 function Collection:where(filterKey, filterValue)
-    local filtered = Collection:new()
+    local filtered = self:new()
     for key, value in pairs(self.table) do
         if value[filterKey] == filterValue then
             filtered:push(value)
@@ -1128,7 +1224,7 @@ end
 
 --- Filters the collection by a given key / value contained within the given table
 function Collection:whereIn(filterKey, filterValues)
-    local filtered = Collection:new()
+    local filtered = self:new()
     for key, value in pairs(self.table) do
         for _, filterValue in ipairs(filterValues) do
             if value[filterKey] == filterValue then
@@ -1141,7 +1237,7 @@ end
 
 --- Filters the collection by a given key / value not contained within the given table
 function Collection:whereNotIn(filterKey, filterValues)
-    local filtered = Collection:new()
+    local filtered = self:new()
     for key, value in pairs(self.table) do
         local allowed = true
         for _, filterValue in ipairs(filterValues) do

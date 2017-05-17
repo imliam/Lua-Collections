@@ -1,37 +1,25 @@
 Collection = require "collections"
+inspect = require "inspect"
 
-function tables_equal(o1, o2, ignore_mt)
-    if o1 == o2 then return true end
-    local o1Type = type(o1)
-    local o2Type = type(o2)
-    if o1Type ~= o2Type then return false end
-    if o1Type ~= 'table' then return false end
-
-    if not ignore_mt then
-        local mt1 = getmetatable(o1)
-        if mt1 and mt1.__eq then
-            return o1 == o2
+--- Dump and die (for debugging purposes)
+function dd(value)
+    if inspect then
+        print(inspect(value))
+    else
+        if type(value) == 'table' then
+            print(Collection:tableToString(value))
+        elseif type(value) == 'string' then
+            print('"' .. value .. '"')
+        else
+            print(value)
         end
     end
-
-    local keySet = {}
-
-    for key1, value1 in pairs(o1) do
-        local value2 = o2[key1]
-        if value2 == nil or tables_equal(value1, value2, ignore_mt) == false then
-            return false
-        end
-        keySet[key1] = true
-    end
-
-    for key2, _ in pairs(o2) do
-        if not keySet[key2] then return false end
-    end
-    return true
+    os.exit()
 end
 
+--- Assert that two tables are equal
 function assert_tables_equal(tbl1, tbl2)
-    if tables_equal(tbl1, tbl2) then
+    if collect(tbl1):equals(tbl2) then
         return true
     end
     return error('Compared tables are not identical.')
@@ -56,6 +44,7 @@ end
 --[[ average ]]--
 do
     assert(collect({1, 1, 2, 4}):average() == 2)
+
     assert(collect({ {foo = 10}, {foo = 10}, {foo = 20}, {foo = 40} }):average('foo') == 20)
 end
 
@@ -64,6 +53,11 @@ do
     assert_tables_equal(
         collect({1, 2, 3, 4, 5, 6, 7}):chunk(4):all(),
         { {1, 2, 3, 4}, {5, 6, 7} }
+    )
+
+    assert_tables_equal(
+        collect({1, 2, 3, 4, 5, 6, 7}):chunk(0):all(),
+        { {} }
     )
 end
 
@@ -111,11 +105,31 @@ do
     assert(collect({1, 2, 3, 4, 5}):contains(function(key, value)
         return value > 5
     end) == false)
+
+    assert(collect({ {'Cat', 'Dog'}, {'Rabbit', 'Mouse'} }):contains('Cat', true) == true)
+
+    assert(collect({ {'Cat', 'Dog'}, {'Rabbit', 'Mouse'} }):contains('Cat') == false)
+end
+
+--[[ convertToIndexed ]]--
+do
+    assert_tables_equal(
+        collect({name = 'Liam', language = 'Lua'}):convertToIndexed():all(),
+        {'Liam', 'Lua'}
+    )
 end
 
 --[[ count ]]--
 do
     assert(collect({'a', 'b', 'c', 'd', 'e'}):count() == 5)
+end
+
+--[[ deal ]]--
+do
+    assert_tables_equal(
+        collect({1, 2, 3, 4, 5, 6, 7, 8, 9, 10}):deal(3):all(),
+        { {1, 4, 7, 10}, {2, 5, 8}, {3, 6, 9} }
+    )
 end
 
 --[[ diff ]]--
@@ -164,6 +178,45 @@ do
     )
 end
 
+--[[ equals ]]--
+do
+    local collection = collect({
+        1, 2, 3,
+        [97] = 97, [98] = 98, [99] = 99, key = true,
+        sub = {1, 2, 3, sub = 'Hello world.'}
+    })
+
+    assert(collection.table[1] == 1)
+    assert(collection.table[2] == 2)
+    assert(collection.table[3] == 3)
+    assert(collection.table[97] == 97)
+    assert(collection.table[98] == 98)
+    assert(collection.table[99] == 99)
+    assert(collection.table['key'] == true)
+    assert(collection.table['sub'][1] == 1)
+    assert(collection.table['sub'][2] == 2)
+    assert(collection.table['sub'][3] == 3)
+    assert(collection.table['sub']['sub'] == 'Hello world.')
+
+    assert(collection:equals({1, 2, 3, 4, 5}) == false)
+
+    assert(collection:equals({
+        1, 2, 3,
+        [97] = 97, [98] = 98, [99] = 99, key = true,
+        sub = {1, 2, 3, sub = 'Hello world.'}
+    }) == true)
+
+    assert(collection:equals({
+        1, 2, 3, 4,
+        [97] = 97, [98] = 98, [99] = 99, key = true,
+        sub = {1, 2, 3, sub = 'Hello world.'}
+    }) == false)
+
+    assert(collect({1, 2, 3, 4, 5}):equals({1, 2, 3, 4, 5}) == true)
+
+    assert(collect({1, 2, 3, 4, 5}):equals({1, 2, 3}) == false)
+end
+
 --[[ filter ]]--
 do
     assert_tables_equal(
@@ -190,24 +243,30 @@ end
 
 --[[ flatten ]]--
 do
-    -- assert_tables_equal(
-    --     collect({name = 'Taylor', languages = {'php', 'javascript', 'lua'} }):flatten():all(),
-    --     {'Taylor', 'php', 'javascript', 'lua'}
-    -- )
+    assert_tables_equal(
+        collect({name = 'Taylor', languages = {'php', 'javascript', 'lua'} }):flatten():all(),
+        {'Taylor', 'php', 'javascript', 'lua'}
+    )
 
-    -- assert_tables_equal(
-    --     collect({Apple = {name = 'iPhone 6S', brand = 'Apple'}, Samsung = {name = 'Galaxy S7', brand = 'Samsung'} })
-    --             :flatten(1):values():all(),
-    --     { {name = 'iPhone 6S', brand = 'Apple'}, {name = 'Galaxy S7', brand = 'Samsung'} }
-    -- )
+    assert_tables_equal(
+        collect({Apple = {name = 'iPhone 6S', brand = 'Apple'}, Samsung = {name = 'Galaxy S7', brand = 'Samsung'} })
+            :flatten(1):resort():all(),
+        { {name = 'iPhone 6S', brand = 'Apple'}, {name = 'Galaxy S7', brand = 'Samsung'} }
+    )
+
+    assert_tables_equal(
+        collect({Apple = {name = 'iPhone 6S', brand = 'Apple'}, Samsung = {name = 'Galaxy S7', brand = 'Samsung'} })
+            :flatten(2):resort():all(),
+        {'iPhone 6S', 'Apple', 'Galaxy S7', 'Samsung'}
+    )
 end
 
 --[[ flip ]]--
 do
-    -- assert_tables_equal(
-    --     collect({name = 'Liam', language = 'Lua'}):flip():all(),
-    --     {Liam = 'name', Lua = 'language'}
-    -- )
+    assert_tables_equal(
+        collect({name = 'Liam', language = 'Lua'}):flip():all(),
+        {Liam = 'name', Lua = 'language'}
+    )
 end
 
 --[[ forget ]]--
@@ -283,12 +342,12 @@ end
 
 --[[ intersect ]]--
 do
-    -- assert_tables_equal(
-    --     collect({'Desk', 'Sofa', 'Chair'})
-    --         :intersect({'Desk', 'Chair', 'Bookcase'})
-    --         :all(),
-    --     {[1] = 'Desk', [3] = 'Chair'}
-    -- )
+    assert_tables_equal(
+        collect({'Desk', 'Sofa', 'Chair'})
+            :intersect({'Desk', 'Chair', 'Bookcase'})
+            :all(),
+        {[1] = 'Desk', [3] = 'Chair'}
+    )
 end
 
 --[[ isAssociative ]]--
@@ -441,14 +500,6 @@ do
     )
 end
 
---[[ notAssociative ]]--
-do
-    assert_tables_equal(
-        collect({name = 'Liam', language = 'Lua'}):notAssociative():all(),
-        {'Liam', 'Lua'}
-    )
-end
-
 --[[ nth ]]--
 do
     assert_tables_equal(
@@ -567,6 +618,8 @@ do
     assert(type(collect({1, 2, 3, 4, 5}):random(3):all()) == 'table')
 
     assert(collect({1, 2, 3, 4, 5}):random(12):count() == 5)
+
+    assert(collect({1, 2, 3, 4, 5}):random(12, true):count() == 12)
 end
 
 --[[ reduce ]]--
@@ -627,6 +680,7 @@ end
 --[[ shuffle ]]--
 do
     assert(type(collect({1, 2, 3, 4, 5}):shuffle():all()) == 'table')
+
     assert(collect({1, 2, 3, 4, 5}):shuffle():count() == 5)
 end
 
@@ -760,10 +814,15 @@ end
 
 --[[ split ]]--
 do
-    -- assert_tables_equal(
-    --     collect({1, 2, 3, 4, 5}):split(3):all(),
-    --     { {1, 2}, {3, 4}, {5} }
-    -- )
+    assert_tables_equal(
+        collect({1, 2, 3, 4, 5}):split(3):all(),
+        { {1, 2}, {3, 4}, {5} }
+    )
+
+    assert_tables_equal(
+        collect({1, 2, 3, 4, 5, 6, 7, 8, 9, 10}):split(3):all(),
+        { {1, 2, 3, 4}, {5, 6, 7, 8}, {9, 10} }
+    )
 end
 
 --[[ sum ]]--
@@ -863,37 +922,38 @@ do
         {3, 4}
     )
 
-    -- assert_tables_equal(
-    --     collect({
-    --         {name = 'iPhone 6', brand = 'Apple', type = 'phone'},
-    --         {name = 'iPhone 5', brand = 'Apple', type = 'phone'},
-    --         {name = 'Apple Watch', brand = 'Apple', type = 'watch'},
-    --         {name = 'Galaxy S6', brand = 'Samsung', type = 'phone'},
-    --         {name = 'Galaxy Gear', brand = 'Samsung', type = 'watch'}
-    --     }):unique('brand'):all(),
-    --     {
-    --         {name = 'iPhone 6', brand = 'Apple', type = 'phone'},
-    --         {name = 'Galaxy S6', brand = 'Samsung', type = 'phone'}
-    --     }
-    -- )
+    assert_tables_equal(
+        collect({
+            {name = 'iPhone 6', brand = 'Apple', type = 'phone'},
+            {name = 'iPhone 5', brand = 'Apple', type = 'phone'},
+            {name = 'Apple Watch', brand = 'Apple', type = 'watch'},
+            {name = 'Galaxy S6', brand = 'Samsung', type = 'phone'},
+            {name = 'Galaxy Gear', brand = 'Samsung', type = 'watch'},
+            {name = 'Pixel', brand = 'Google', type = 'phone'}
+        }):unique('brand'):all(),
+        {
+            {name = 'Pixel', brand = 'Google', type = 'phone'}
+        }
+    )
 
-    -- assert_tables_equal(
-    --     collect({
-    --         {name = 'iPhone 6', brand = 'Apple', type = 'phone'},
-    --         {name = 'iPhone 5', brand = 'Apple', type = 'phone'},
-    --         {name = 'Apple Watch', brand = 'Apple', type = 'watch'},
-    --         {name = 'Galaxy S6', brand = 'Samsung', type = 'phone'},
-    --         {name = 'Galaxy Gear', brand = 'Samsung', type = 'watch'}
-    --     }):unique(function(key, value)
-    --         return value['brand'] .. value['type']
-    --     end):all(),
-    --     {
-    --         {name = 'iPhone 6', brand = 'Apple', type = 'phone'},
-    --         {name = 'Apple Watch', brand = 'Apple', type = 'watch'},
-    --         {name = 'Galaxy S6', brand = 'Samsung', type = 'phone'},
-    --         {name = 'Galaxy Gear', brand = 'Samsung', type = 'watch'}
-    --     }
-    -- )
+    assert_tables_equal(
+        collect({
+            {name = 'iPhone 6', brand = 'Apple', type = 'phone'},
+            {name = 'iPhone 5', brand = 'Apple', type = 'phone'},
+            {name = 'Apple Watch', brand = 'Apple', type = 'watch'},
+            {name = 'Galaxy S6', brand = 'Samsung', type = 'phone'},
+            {name = 'Galaxy Gear', brand = 'Samsung', type = 'watch'},
+            {name = 'Pixel', brand = 'Google', type = 'phone'}
+        }):unique(function(key, value)
+            return value['brand'] .. value['type']
+        end):all(),
+        {
+            {name = 'Galaxy Gear', brand = 'Samsung', type = 'watch'},
+            {name = 'Apple Watch', brand = 'Apple', type = 'watch'},
+            {name = 'Pixel', brand = 'Google', type = 'phone'},
+            {name = 'Galaxy S6', brand = 'Samsung', type = 'phone'}
+        }
+    )
 end
 
 --[[ when ]]--
@@ -962,6 +1022,11 @@ end
 do
     assert_tables_equal(
         collect({'Chair', 'Desk'}):zip({100, 200}):all(),
+        { {'Chair', 100}, {'Desk', 200} }
+    )
+
+    assert_tables_equal(
+        collect({'Chair', 'Desk'}):zip({100, 200, 300}):all(),
         { {'Chair', 100}, {'Desk', 200} }
     )
 end
