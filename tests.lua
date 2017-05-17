@@ -1,18 +1,13 @@
 Collection = require "collections"
-inspect = require "inspect"
 
 --- Dump and die (for debugging purposes)
 function dd(value)
-    if inspect then
-        print(inspect(value))
+    if type(value) == 'table' then
+        print(Collection:tableToString(value))
+    elseif type(value) == 'string' then
+        print('"' .. value .. '"')
     else
-        if type(value) == 'table' then
-            print(Collection:tableToString(value))
-        elseif type(value) == 'string' then
-            print('"' .. value .. '"')
-        else
-            print(value)
-        end
+        print(value)
     end
     os.exit()
 end
