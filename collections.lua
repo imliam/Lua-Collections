@@ -7,15 +7,18 @@
 local Collection = {}
 Collection.version = '0.2.0'
 
---- Creates a new collection instance
-function Collection:new(tbl)
-    return setmetatable({ table = tbl or {} }, { __index = self, __tostring = self.toString })
-end
+
 
 --- Alias for the Collection:new() method
 function collect(tbl)
     return Collection:new(tbl)
 end
+
+
+
+-----[[ COLLECTION METHODS ]]-----
+
+
 
 --- Returns all elements from a collection as a table
 function Collection:all()
@@ -26,44 +29,18 @@ function Collection:all()
     return tbl
 end
 
+--- Adds an item to the end of a collection
+function Collection:append(value)
+    table.insert(self.table, value)
+    return self
+end
+
 --- Returns the average value of a list or given key
 function Collection:average(key)
     local count = self:count()
     if count > 0 then
         return self:sum(key) / count
     end
-end
-
---- Alias for the Collection:average() method
-Collection.avg = Collection.average
-
---- Alias for the Collection:average() method
-Collection.mean = Collection.average
-
---- Returns the total number of items in the collection
-function Collection:count()
-    local i = 0
-    for key, value in pairs(self.table) do
-        i = i + 1
-    end
-    return i
-end
-
---- Returns the sum of items in the collection
-function Collection:sum(key)
-    local sum = 0
-    for i, value in pairs(self.table) do
-        if key then
-            if value[key] then
-                sum = sum + value[key]
-            else
-                error('Value "' .. key .. '" does not exist in collection object with key "' .. i .. '"')
-            end
-        else
-            sum = sum + value
-        end
-    end
-    return sum
 end
 
 --- Breaks the collection into multiple smaller collections of a given size
@@ -87,6 +64,15 @@ function Collection:chunk(count)
     end
     self.table = chunks
     return self
+end
+
+--- Returns a copy of the collection
+function Collection:clone()
+    local cloned = {}
+    for key, value in pairs(self.table) do
+        cloned[key] = value
+    end
+    return self:new(cloned)
 end
 
 --- Collapses a collection of tables into a single, flat collection
@@ -147,6 +133,41 @@ function Collection:contains(containValue, recursive)
     return false
 end
 
+--- Turns an associative table into an indexed one, removing string keys
+function Collection:convertToIndexed()
+    local notAssociative = self:new()
+    for key, value in pairs(self.table) do
+        notAssociative:push(value)
+    end
+    return notAssociative
+end
+
+--- Returns the total number of items in the collection
+function Collection:count()
+    local i = 0
+    for key, value in pairs(self.table) do
+        i = i + 1
+    end
+    return i
+end
+
+--- Deals the collection into a number of groups in order, one at a time
+function Collection:deal(hands)
+    local splitted = self:times(hands, function() return {} end)
+    local currentSection = 1
+
+    for key, value in pairs(self.table) do
+        table.insert(splitted.table[currentSection], value)
+
+        currentSection = currentSection + 1
+        if currentSection > #splitted.table then
+            currentSection = 1
+        end
+    end
+
+    return splitted
+end
+
 --- Compares a collection against another table based on its values
 --- Returns the values in the original collection that are not present in the given table
 function Collection:diff(difference)
@@ -191,9 +212,6 @@ function Collection:each(callback)
     return self
 end
 
---- Alias for the Collection:each() method
-Collection.forEach = Collection.each
-
 --- Iterates over the numerically indexed items in the collection and passes each to a callback
 function Collection:eachi(callback)
     for key, value in ipairs(self.table) do
@@ -204,8 +222,37 @@ function Collection:eachi(callback)
     return self
 end
 
---- Alias for the Collection:eachi() method
-Collection.forEachi = Collection.eachi
+--- Compares a table with the internal table of the collection
+function Collection:equals(tbl, ignoreMetatables, tbl2)
+    tbl2 = tbl2 or self.table
+    if tbl == tbl2 then return true end
+    local tblType = type(tbl)
+    local tbl2Type = type(tbl2)
+    if tblType ~= tbl2Type then return false end
+    if tblType ~= 'table' then return false end
+
+    if not ignoreMetatables then
+        local mt1 = getmetatable(tbl)
+        if mt1 and mt1.__eq then
+            return tbl == tbl2
+        end
+    end
+
+    local keySet = {}
+
+    for key1, value1 in pairs(tbl) do
+        local value2 = tbl2[key1]
+        if value2 == nil or self:equals(value1, ignoreMetatables, value2) == false then
+            return false
+        end
+        keySet[key1] = true
+    end
+
+    for key2, _ in pairs(tbl2) do
+        if not keySet[key2] then return false end
+    end
+    return true
+end
 
 --- Verify that all elements of the collection pass a truth test
 function Collection:every(callback)
@@ -234,24 +281,6 @@ function Collection:except(keys)
     return self
 end
 
---- Filters the collection using the given callback, keeping only items that pass a truth test
-function Collection:filter(callback)
-    local filtered = {}
-    for key, value in pairs(self.table) do
-        local response = false
-        if callback then
-            response = callback(key, value)
-        elseif not self:falseyValue(value) then
-            response = true
-        end
-        if response then
-            filtered[key] = value
-        end
-    end
-    self.table = filtered
-    return self
-end
-
 --- Internal function used to determine if a value is falsey
 function Collection:falseyValue(value)
     for k, v in ipairs({0, false, ''}) do
@@ -277,6 +306,24 @@ function Collection:falseyValue(value)
     return false
 end
 
+--- Filters the collection using the given callback, keeping only items that pass a truth test
+function Collection:filter(callback)
+    local filtered = {}
+    for key, value in pairs(self.table) do
+        local response = false
+        if callback then
+            response = callback(key, value)
+        elseif not self:falseyValue(value) then
+            response = true
+        end
+        if response then
+            filtered[key] = value
+        end
+    end
+    self.table = filtered
+    return self
+end
+
 --- Returns the first element in the collection, or that passes a truth test
 function Collection:first(callback)
     for key, value in pairs(self.table) do
@@ -288,31 +335,6 @@ function Collection:first(callback)
             return value
         end
     end
-end
-
---- Returns the last element in the collection, or that passes a truth test
-function Collection:last(callback)
-    local currentValue
-    for key, value in pairs(self.table) do
-        if callback then
-            if callback(key, value) then
-                currentValue = value
-            end
-        else
-            currentValue = value
-        end
-    end
-    return currentValue
-end
-
---- Iterates through the collection and passes each value to the callback, which can then modify the values
-function Collection:map(callback)
-    local remapped = self:new()
-    for key, value in pairs(self.table) do
-        newKey, newValue = callback(key, value)
-        remapped:set(newKey, newValue)
-    end
-    return remapped
 end
 
 --- Flattens a multi-dimensional collection into a single dimension
@@ -354,9 +376,6 @@ function Collection:forget(key)
     end
     return self
 end
-
---- Alias for the Collection:forget() method
-Collection.remove = Collection.forget
 
 --- Returns a collection containing the items that would be present for a given page number
 function Collection:forPage(pageNumber, perPage)
@@ -402,56 +421,12 @@ function Collection:groupBy(groupKey)
     return grouped
 end
 
---- Turns an associative table into an indexed one, removing string keys
-function Collection:convertToIndexed()
-    local notAssociative = self:new()
-    for key, value in pairs(self.table) do
-        notAssociative:push(value)
-    end
-    return notAssociative
-end
-
---- Alias for the Collection:convertToIndexed() method
-Collection.deassociate = Collection.convertToIndexed
-
 --- Determines if a given key exists in the collection
 function Collection:has(key)
     if self.table[key] then
         return true
     end
     return false
-end
-
---- Compares a table with the internal table of the collection
-function Collection:equals(tbl, ignoreMetatables, tbl2)
-    tbl2 = tbl2 or self.table
-    if tbl == tbl2 then return true end
-    local tblType = type(tbl)
-    local tbl2Type = type(tbl2)
-    if tblType ~= tbl2Type then return false end
-    if tblType ~= 'table' then return false end
-
-    if not ignoreMetatables then
-        local mt1 = getmetatable(tbl)
-        if mt1 and mt1.__eq then
-            return tbl == tbl2
-        end
-    end
-
-    local keySet = {}
-
-    for key1, value1 in pairs(tbl) do
-        local value2 = tbl2[key1]
-        if value2 == nil or self:equals(value1, ignoreMetatables, value2) == false then
-            return false
-        end
-        keySet[key1] = true
-    end
-
-    for key2, _ in pairs(tbl2) do
-        if not keySet[key2] then return false end
-    end
-    return true
 end
 
 --- Joins the items in a collection into a string
@@ -469,6 +444,12 @@ function Collection:implode(implodedKey, delimeter)
     end
 end
 
+--- Inserts a value at a given numeric index
+function Collection:insert(value, position)
+    table.insert(self.table, position, value)
+    return self
+end
+
 --- Removes any values from the original collection that are not present in the passed table
 function Collection:intersect(intersection)
     local intersected = self:new()
@@ -481,6 +462,14 @@ function Collection:intersect(intersection)
     end
 
     return intersected
+end
+
+--- Determines whether the collection is associative
+function Collection:isAssociative()
+    if self:count() > #self.table then
+        return true
+    end
+    return false
 end
 
 --- Determines if the collection is empty
@@ -522,6 +511,31 @@ function Collection:keys()
     return keys
 end
 
+--- Returns the last element in the collection, or that passes a truth test
+function Collection:last(callback)
+    local currentValue
+    for key, value in pairs(self.table) do
+        if callback then
+            if callback(key, value) then
+                currentValue = value
+            end
+        else
+            currentValue = value
+        end
+    end
+    return currentValue
+end
+
+--- Iterates through the collection and passes each value to the callback, which can then modify the values
+function Collection:map(callback)
+    local remapped = self:new()
+    for key, value in pairs(self.table) do
+        newKey, newValue = callback(key, value)
+        remapped:set(newKey, newValue)
+    end
+    return remapped
+end
+
 --- Iterates through the the collection and remaps the key and value based on the return of a callback
 function Collection:mapWithKeys(callback)
     local mapped = self:new()
@@ -547,23 +561,6 @@ function Collection:max(maxKey)
         end
     end
     return max
-end
-
---- Returns the minimum value of a set of given values
-function Collection:min(minKey)
-    local min
-    for key, value in pairs(self.table) do
-        if minKey then
-            if not min or value[minKey] < min then
-                min = value[minKey]
-            end
-        else
-            if not min or value < min then
-                min = value
-            end
-        end
-    end
-    return min
 end
 
 --- Returns the median value of a set of given values
@@ -595,6 +592,23 @@ function Collection:merge(toMerge)
         end
     end
     return self
+end
+
+--- Returns the minimum value of a set of given values
+function Collection:min(minKey)
+    local min
+    for key, value in pairs(self.table) do
+        if minKey then
+            if not min or value[minKey] < min then
+                min = value[minKey]
+            end
+        else
+            if not min or value < min then
+                min = value
+            end
+        end
+    end
+    return min
 end
 
 --- Returns the mode value of a given key
@@ -629,6 +643,11 @@ function Collection:mode(modeKey)
     end
 
     return temp
+end
+
+--- Creates a new collection instance
+function Collection:new(tbl)
+    return setmetatable({ table = tbl or {} }, { __index = self, __tostring = self.toString })
 end
 
 --- Creates a new collection consisting of every nth element
@@ -722,29 +741,12 @@ function Collection:pull(key)
     end
 end
 
---- Adds an item to the end of a collection
-function Collection:append(value)
-    table.insert(self.table, value)
-    return self
-end
-
---- Alias for the Collection:append() method
-Collection.push = Collection.append
-
---- Inserts a value at a given numeric index
-function Collection:insert(value, position)
-    table.insert(self.table, position, value)
-    return self
-end
-
 --- Sets the given key and value in the collection
 function Collection:put(key, value)
     self.table[key] = value
     return self
 end
 
---- Alias for the Collection:put() method
-Collection.set = Collection.put
 
 --- Returns a random item or number of items from the collection
 function Collection:random(count, rep)
@@ -812,9 +814,6 @@ function Collection:resort()
     end
     return sorted
 end
-
---- Alias for the Collection:resort() method
-Collection.values = Collection.resort
 
 --- Reverses the order of the numerical keys in the collection
 function Collection:reverse()
@@ -912,9 +911,6 @@ function Collection:sort(callback)
     return sorted
 end
 
---- Alias for the Collection:sort() method
-Collection.sortAsc = Collection.sort
-
 --- Same as the Collection:sort() method, but returns the collection in the opposite order
 function Collection:sortDesc(callback)
     local sorted = self:clone()
@@ -927,15 +923,6 @@ function Collection:sortDesc(callback)
         table.sort(sorted.table, function(a, b) return a > b end)
     end
     return sorted
-end
-
---- Returns a copy of the collection
-function Collection:clone()
-    local cloned = {}
-    for key, value in pairs(self.table) do
-        cloned[key] = value
-    end
-    return self:new(cloned)
 end
 
 --- Removes and returns a slice of items starting at the specified index
@@ -978,30 +965,27 @@ function Collection:splice(index, size, replacements)
     return spliced
 end
 
---- Alias for the Collection:average() method
-Collection.replace = Collection.splice
-
 --- Breaks the collection into the given number of groups
 function Collection:split(count)
     local groupSize = math.ceil(self:count() / count)
     return self:chunk(groupSize)
 end
 
---- Deals the collection into a number of groups in order, one at a time
-function Collection:deal(hands)
-    local splitted = self:times(hands, function() return {} end)
-    local currentSection = 1
-
-    for key, value in pairs(self.table) do
-        table.insert(splitted.table[currentSection], value)
-
-        currentSection = currentSection + 1
-        if currentSection > #splitted.table then
-            currentSection = 1
+--- Returns the sum of items in the collection
+function Collection:sum(key)
+    local sum = 0
+    for i, value in pairs(self.table) do
+        if key then
+            if value[key] then
+                sum = sum + value[key]
+            else
+                error('Value "' .. key .. '" does not exist in collection object with key "' .. i .. '"')
+            end
+        else
+            sum = sum + value
         end
     end
-
-    return splitted
+    return sum
 end
 
 --- Returns a collection with the specified number of items
@@ -1032,42 +1016,20 @@ function Collection:take(count)
     return taken
 end
 
---- Determines whether the collection is associative
-function Collection:isAssociative()
-    if self:count() > #self.table then
+--- Internal function used to determine if a table is associative
+function Collection:tableIsAssociative(tbl)
+    local totalCount = 0
+    for key, value in pairs(tbl) do
+        totalCount = totalCount + 1
+    end
+    if totalCount > #tbl then
         return true
     end
     return false
 end
 
---- Executes the given callback without affecting the collection itself
-function Collection:tap(callback)
-    callback(self)
-    return self
-end
-
---- Creates a new collection by invoking the callback a given amount of times
-function Collection:times(count, callback)
-    local tbl = {}
-    for i = 1, count do
-        table.insert(tbl, callback(i, tbl))
-    end
-    return self:new(tbl)
-end
-
---- Returns a reference to the underlying table of the collection
-function Collection:toTable()
-    return self.table
-end
-
---- Returns a JSON string representation of the collection's values
-function Collection:toJSON()
-    return self:tableToJSON(self.table)
-end
-
 --- Internal method used by the Collection:toJSON method to recursively convert tables
 function Collection:tableToJSON(tbl)
-
     local jsonRepresentation = function(value)
         if type(value) == 'table' then
             return self:tableToJSON(value)
@@ -1097,17 +1059,10 @@ function Collection:tableToJSON(tbl)
         end
         return '[' .. table.concat(jsonElements, ',') .. ']'
     end
-    
-end
-
---- Returns a string representation of a Lua table
-function Collection:toString(tbl)
-    return self:tableToString(self.table)
 end
 
 --- Internal method used by the Collection:toString method to recursively convert tables
 function Collection:tableToString(tbl)
-
     local luaRepresentation = function(value)
         if type(value) == 'table' then
             return self:tableToString(value)
@@ -1138,19 +1093,36 @@ function Collection:tableToString(tbl)
         end
     end
     return '{' .. table.concat(luaElements, ',') .. '}'
-    
 end
 
---- Internal function used to determine if a table is associative
-function Collection:tableIsAssociative(tbl)
-    local totalCount = 0
-    for key, value in pairs(tbl) do
-        totalCount = totalCount + 1
+--- Executes the given callback without affecting the collection itself
+function Collection:tap(callback)
+    callback(self)
+    return self
+end
+
+--- Creates a new collection by invoking the callback a given amount of times
+function Collection:times(count, callback)
+    local tbl = {}
+    for i = 1, count do
+        table.insert(tbl, callback(i, tbl))
     end
-    if totalCount > #tbl then
-        return true
-    end
-    return false
+    return self:new(tbl)
+end
+
+--- Returns a reference to the underlying table of the collection
+function Collection:toTable()
+    return self.table
+end
+
+--- Returns a JSON string representation of the collection's values
+function Collection:toJSON()
+    return self:tableToJSON(self.table)
+end
+
+--- Returns a string representation of a Lua table
+function Collection:toString(tbl)
+    return self:tableToString(self.table)
 end
 
 --- Iterates over the collection and calls the given callback with each item in the collection, replacing the values in the collection with the response
@@ -1262,6 +1234,51 @@ function Collection:zip(values)
     end
     return zipped
 end
+
+
+
+-----[[ ALIASES FOR OTHER FUNCTIONS ]]-----
+
+
+
+--- Alias for the Collection:average() method
+Collection.avg = Collection.average
+
+--- Alias for the Collection:average() method
+Collection.mean = Collection.average
+
+--- Alias for the Collection:each() method
+Collection.forEach = Collection.each
+
+--- Alias for the Collection:eachi() method
+Collection.forEachi = Collection.eachi
+
+--- Alias for the Collection:forget() method
+Collection.remove = Collection.forget
+
+--- Alias for the Collection:convertToIndexed() method
+Collection.deassociate = Collection.convertToIndexed
+
+--- Alias for the Collection:append() method
+Collection.push = Collection.append
+
+--- Alias for the Collection:put() method
+Collection.set = Collection.put
+
+--- Alias for the Collection:resort() method
+Collection.values = Collection.resort
+
+--- Alias for the Collection:sort() method
+Collection.sortAsc = Collection.sort
+
+--- Alias for the Collection:average() method
+Collection.replace = Collection.splice
+
+
+
+-----[[ RETURN COLLECTION OBJECT ]]-----
+
+
 
 if require then
     return Collection
