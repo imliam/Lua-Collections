@@ -17,7 +17,13 @@ collect({'Cat', 'Dog', 'Mouse', 'Elephant', 'Hamster', 'Lion'})
         :split(3)
         :all()
 
--- { {'DOG', 'CAT', 'LION'}, {'MOUSE', 'HAMSTER', 'ELEPHANT'}, {'Coyote'} }
+--[[
+    {
+        {'DOG', 'CAT', 'LION'},
+        {'MOUSE', 'HAMSTER', 'ELEPHANT'},
+        {'Coyote'}
+    }
+]]
 ```
 
 This collection class was heavily inspired by the collection functionality found in the [Laravel Framework](https://laravel.com/docs/master/collections) for PHP, and implements many of the methods from it, although with some changes to functionality to account for how Lua handles data.
@@ -171,7 +177,12 @@ collect({ {foo = 10}, {foo = 10}, {foo = 20}, {foo = 40} }):average('foo')
 
 ```lua
 collect({1, 2, 3, 4, 5, 6, 7}):chunk(4):all()
--- { {1, 2, 3, 4}, {5, 6, 7} }
+--[[
+    {
+        {1, 2, 3, 4},
+        {5, 6, 7}
+    }
+]]
 ```
 
 <hr>
@@ -326,7 +337,13 @@ collect({'a', 'b', 'c', 'd', 'e'}):count()
 
 ```lua
 collect({1, 2, 3, 4, 5, 6, 7, 8, 9, 10}):deal(3):all()
--- { {1, 4, 7, 10}, {2, 5, 8}, {3, 6, 9} }
+--[[
+    {
+        {1, 4, 7, 10},
+        {2, 5, 8},
+        {3, 6, 9}
+    }
+]]
 ```
 
 <hr>
@@ -597,7 +614,12 @@ collect({name = 'Taylor', languages = {'php', 'javascript', 'lua'} }):flatten():
 
 collect({Apple = {name = 'iPhone 6S', brand = 'Apple'}, Samsung = {name = 'Galaxy S7', brand = 'Samsung'} })
         :flatten(1):values():all()
--- { {name = 'iPhone 6S', brand = 'Apple'}, {name = 'Galaxy S7', brand = 'Samsung'} }
+--[[
+    {
+        {name = 'iPhone 6S', brand = 'Apple'},
+        {name = 'Galaxy S7', brand = 'Samsung'}
+    }
+]]
 ```
 
 <hr>
@@ -1823,10 +1845,22 @@ collection3:all()
 
 ```lua
 collect({1, 2, 3, 4, 5}):split(3):all()
--- { {1, 2}, {3, 4}, {5} }
+--[[
+    {
+        {1, 2},
+        {3, 4},
+        {5}
+    }
+]]
 
 collect({1, 2, 3, 4, 5, 6, 7, 8, 9, 10}):split(3):all()
--- { {1, 2, 3, 4}, {5, 6, 7, 8}, {9, 10} }
+--[[
+    {
+        {1, 2, 3, 4},
+        {5, 6, 7, 8},
+        {9, 10}
+    }
+]]
 ```
 
 <hr>
@@ -2247,8 +2281,18 @@ collect({
 
 ```lua
 collect({'Chair', 'Desk'}):zip({100, 200}):all()
--- { {'Chair', 100}, {'Desk', 200} }
+--[[
+    {
+        {'Chair', 100},
+        {'Desk', 200}
+    }
+]]
 
 collect({'Chair', 'Desk'}):zip({100, 200, 300}):all()
--- { {'Chair', 100}, {'Desk', 200} }
+--[[
+    {
+        {'Chair', 100},
+        {'Desk', 200}
+    }
+]]
 ```
